@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Packages\Ametrin\Utils\Utils.csproj" />
+    <ProjectReference Include="..\..\..\Packages\Ametrin.Serialization\Ametrin.Serialization.csproj" />
+    <ProjectReference Include="..\..\..\Packages\Ametrin.Utils\Ametrin.Utils.csproj" />
   </ItemGroup>
 
 </Project>

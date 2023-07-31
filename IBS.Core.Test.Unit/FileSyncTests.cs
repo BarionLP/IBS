@@ -6,9 +6,15 @@ public sealed class FileSyncTests{
 
     [Fact]
     public void FileSyncChecks(){
-        var config = new BackupConfig(ORIGIN_PATH, BACKUP_PATH);
-        var testFile = config.GetFile("test.txt");
-        var areSame = testFile.IsSynced();
-        Assert.True(areSame);
+        var handler = new BackupHandler(new BlacklistBackupConfig(ORIGIN_PATH, BACKUP_PATH));
+        var syncedFile = handler.GetFile("synced.txt");
+        var changedFile = handler.GetFile("tosync.txt");
+        var deletedFile = handler.GetFile("deleted.txt");
+        //var areSame = syncedFile.IsSynced();
+        Assert.True(syncedFile.IsSynced());
+        Assert.False(changedFile.IsSynced());
+        Assert.True(deletedFile.IsDeleted());
+        Assert.True(syncedFile.CompareHashes());
+        Assert.False(changedFile.CompareHashes());
     }
 }

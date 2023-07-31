@@ -5,8 +5,38 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IBS.GUI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Intelligent Backup System" Height="720" Width="1080">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" MaxWidth="256"/>
+            <ColumnDefinition Width="4*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" MaxHeight="64"/>
+            <RowDefinition Height="9*"/>
+        </Grid.RowDefinitions>
 
+        <TextBlock TextAlignment="Center" 
+                   VerticalAlignment="Center" 
+                   FontSize="24">
+            IBS
+        </TextBlock>
+        <ListView x:Name="BackupsView" Grid.Row="1" SelectionChanged="BackupSelectionChanged">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding OriginInfo}"/>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <Button Click="SyncClicked">Sync</Button>
+            <Button Click="CleanClicked">Clean</Button>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="0 0 5 0">Backing up:</TextBlock>
+                <TextBlock x:Name="FileNameDisplay">nothing</TextBlock>
+            </StackPanel>
+            <ProgressBar x:Name="SyncProgressBar" Minimum="0" Maximum="1" Height="22"/>
+        </StackPanel>
     </Grid>
 </Window>

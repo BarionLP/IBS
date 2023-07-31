@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Packages\Ametrin\WPFUtils\WPFUtils.csproj" />
+    <ProjectReference Include="..\..\..\Packages\Ametrin.Utils.WPF\Ametrin.Utils.WPF.csproj" />
+    <ProjectReference Include="..\IBS.Core\IBS.Core.csproj" />
+    <ProjectReference Include="..\IBS.DataPersistence\IBS.DataPersistence.csproj" />
   </ItemGroup>
 
 </Project>
