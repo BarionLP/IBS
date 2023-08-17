@@ -1,13 +1,12 @@
-﻿using Ametrin.Serialization;
-using System.Diagnostics;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace IBS.Core;
 
 public sealed class BlacklistBackupConfig : IBackupConfig {
-    [JsonConverter(typeof(DirectoryInfoJsonConverter))] public DirectoryInfo OriginInfo { get; }
-    [JsonConverter(typeof(DirectoryInfoJsonConverter))] public DirectoryInfo BackupInfo { get; }
-    [JsonConverter(typeof(FileInfoJsonConverter))] public FileInfo ConfigFileInfo { get; }
+    public DirectoryInfo OriginInfo { get; }
+    public List<DirectoryInfo> BackupInfos { get; } = new();
+    [JsonIgnore] public FileInfo ConfigFileInfo { get; }
+    //public FileInfo MetaDataFileInfo { get; }
 
     public List<string> IgnoredPaths { get; } = new();
     public List<string> IgnoredFileExtensions { get; } = new();
@@ -15,20 +14,29 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
     public List<string> IgnoredFolderNames { get; } = new();
     public List<string> IgnoredFileNames { get; } = new();
 
-    public BlacklistBackupConfig(string originPath, string backupPath) {
-        OriginInfo = new(originPath);
-        BackupInfo = new(Path.Combine(backupPath, "_Storage"));
-        ConfigFileInfo = new(Path.Combine(backupPath, "config.json"));
+    private BlacklistBackupConfig(DirectoryInfo originInfo) {
+        OriginInfo = originInfo;
+        //MetaDataFileInfo = metaDataFileInfo;
+        ConfigFileInfo = new(Path.Combine(OriginInfo.FullName, "backup_config.json"));
+    }
 
-        if(!BackupInfo.Exists) BackupInfo.Create();
+    public BlacklistBackupConfig(string originPath, string backupPath) : 
+        this(new (originPath)) {
+        (this as IBackupConfig).AddBackupLocation(backupPath);
+
+        IgnoredPaths.Add(ConfigFileInfo.FullName);
+
         if(!ConfigFileInfo.Exists) ConfigFileInfo.Create();
+        //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create();
+        IgnoreFolders("System Volume Information");
+        IgnorePaths(ConfigFileInfo.FullName);
     }
 
     [JsonConstructor]
-    public BlacklistBackupConfig(DirectoryInfo originInfo, DirectoryInfo backupInfo, FileInfo configFileInfo, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredKeywords, List<string> ignoredFolderNames, List<string> ignoredFileNames) {
-        OriginInfo = originInfo;
-        BackupInfo = backupInfo;
-        ConfigFileInfo = configFileInfo;
+    public BlacklistBackupConfig(DirectoryInfo originInfo, List<DirectoryInfo> backupInfos, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredKeywords, List<string> ignoredFolderNames, List<string> ignoredFileNames) : 
+        this(originInfo){
+
+        BackupInfos = backupInfos;
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
         IgnoredKeywords = ignoredKeywords;
@@ -36,36 +44,11 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
         IgnoredFileNames = ignoredFileNames;
     }
 
-    public IEnumerable<DirectoryInfo> GetDirectories() => GetValidDirectories(OriginInfo);
-    public IEnumerable<FileInfo> GetFiles() => GetDirectories().SelectMany(GetValidFiles);
+    public bool ShouldInclude(FileSystemInfo info) => !ShouldExclude(info);
 
-    public IEnumerable<DirectoryInfo> GetDirectoriesFromBackup() => BackupInfo.EnumerateDirectories("*", SearchOption.AllDirectories);
-    public IEnumerable<FileInfo> GetFilesFromBackup() => BackupInfo.EnumerateFiles("*", SearchOption.AllDirectories);
-
-    public IEnumerable<DirectoryInfo> GetValidDirectories(DirectoryInfo directoryInfo) {
-        yield return directoryInfo;
-        foreach(var directory in directoryInfo.EnumerateDirectories("*", SearchOption.TopDirectoryOnly)) {
-            if(IsIgnored(directory)) {
-                Trace.TraceInformation("Ignored {0}", directory.FullName);
-                continue;
-            }
-
-            foreach(var subDirectory in GetValidDirectories(directory)) {
-                yield return subDirectory;
-            }
-        }
-    }
-
-    public IEnumerable<FileInfo> GetValidFiles(DirectoryInfo directoryInfo) {
-        foreach(var file in directoryInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly)) {
-            if(IsIgnored(file)) continue;
-            yield return file;
-        }
-    }
-
-    public bool IsIgnored(FileSystemInfo info) {
+    public bool ShouldExclude(FileSystemInfo info) {
         if(info.Name.StartsWith('$')) return true;
-        if(info.Name == "System Volume Information") return true;
+
         if(IgnoredPaths.Contains(info.FullName)) return true;
         if(info is FileInfo fileInfo) {
             if(IgnoredFileExtensions.Contains(fileInfo.Extension)) return true;
@@ -104,12 +87,69 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
 }
 
 public interface IBackupConfig {
-    [JsonConverter(typeof(DirectoryInfoJsonConverter))] public DirectoryInfo OriginInfo { get; }
-    [JsonConverter(typeof(DirectoryInfoJsonConverter))] public DirectoryInfo BackupInfo { get; }
-    [JsonConverter(typeof(FileInfoJsonConverter))] public FileInfo ConfigFileInfo { get; }
+    public DirectoryInfo OriginInfo { get; }
+    public List<DirectoryInfo> BackupInfos { get; }
+    public FileInfo ConfigFileInfo { get; }
+    //public FileInfo MetaDataFileInfo { get; }
 
-    public IEnumerable<DirectoryInfo> GetDirectories();
-    public IEnumerable<FileInfo> GetFiles();
-    public IEnumerable<DirectoryInfo> GetDirectoriesFromBackup();
-    public IEnumerable<FileInfo> GetFilesFromBackup();
+    public bool ShouldInclude(FileSystemInfo info);
+    public bool ShouldExclude(FileSystemInfo info);
+
+    public virtual FileInfo GetFileInfo(string relativePath) => new(Path.Combine(OriginInfo.FullName, relativePath));
+    public virtual IEnumerable<FileInfo> GetBackupFiles(string relativePath) {
+        foreach(var backupInfo in BackupInfos) {
+            if(!backupInfo.Exists) continue;
+
+            yield return new FileInfo(Path.Combine(backupInfo.FullName, relativePath));
+        }
+    }
+
+    public virtual IEnumerable<DirectoryInfo> GetDirectories() => GetValidDirectories(OriginInfo);
+    public virtual IEnumerable<FileInfo> GetFiles() => GetDirectories().SelectMany(GetValidFiles);
+    public virtual IEnumerable<DirectoryInfo> GetBackupDirectories() {
+        foreach(var backupInfo in BackupInfos) {
+            backupInfo.Refresh();
+            if(!backupInfo.Exists) continue;
+            foreach(var folder in backupInfo.EnumerateDirectories("*", SearchOption.AllDirectories)) {
+                yield return folder;
+            }
+        }
+    }
+    public virtual IEnumerable<FileInfo> GetBackupFiles() {
+        foreach(var backupInfo in BackupInfos) {
+            if(!backupInfo.Exists) continue;
+            foreach(var file in backupInfo.EnumerateFiles("*", SearchOption.AllDirectories)) {
+                yield return file;
+            }
+        }
+    }
+    protected virtual IEnumerable<DirectoryInfo> GetValidDirectories(DirectoryInfo directoryInfo) {
+        yield return directoryInfo;
+        foreach(var directory in directoryInfo.EnumerateDirectories("*", SearchOption.TopDirectoryOnly)) {
+            if(ShouldExclude(directory)) continue;
+
+            foreach(var subDirectory in GetValidDirectories(directory)) {
+                yield return subDirectory;
+            }
+        }
+    }
+    protected virtual IEnumerable<FileInfo> GetValidFiles(DirectoryInfo directoryInfo) {
+        foreach(var file in directoryInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly)) {
+            if(ShouldExclude(file)) continue;
+            yield return file;
+        }
+    }
+
+    public virtual void ForeachBackup(Action<DirectoryInfo> action) {
+        foreach(var backupInfo in BackupInfos) {
+            if(!backupInfo.Exists) continue;
+            action(backupInfo);
+        }
+    }
+
+    public virtual void AddBackupLocation(string path) {
+        var info = new DirectoryInfo(Path.Combine(path, "_Storage"));
+        if(!info.Exists) info.Create();
+        BackupInfos.Add(info);
+    }
 }

@@ -19,13 +19,13 @@ public partial class App : Application{
 
     public static event Action? OnBackupConfigsChange;
 
-    public static List<IBackupConfig> BackupConfigs { get; } = new() /*{
-        new BlacklistBackupConfig(@"I:\Coding\Tools\IBS\TestData\Origin", @"I:\Coding\Tools\IBS\TestData\Backup"),
-        new BlacklistBackupConfig(@"D:\", @"B:\Backup\Data").IgnorePaths(@"D:\Util").IgnoreFolders(".dtrash"),
-        new BlacklistBackupConfig(@"I:\", @"B:\Backup\Projects")
-            .IgnorePaths(@"I:\AssetLibrary\SFX\DaVinci Resolve", @"I:\Movies\DaVinci Resolve", @"I:\SteamLibrary")
-            .IgnoreFolders(".git", ".vs", "bin", "Build", "Builds", "Library", "Logs", "obj", "publish", "Temp", "UserSettings", ".gradle", ".idea", "build"),
-    }*/;
+    public static List<IBackupConfig> BackupConfigs { get; } = new() {
+        //new BlacklistBackupConfig(@"I:\Coding\Tools\IBS\TestData\Origin", @"I:\Coding\Tools\IBS\TestData\Backup"),
+        //new BlacklistBackupConfig(@"D:\", @"B:\Backup\Data").IgnorePaths(@"D:\Util").IgnoreFolders(".dtrash"),
+        //new BlacklistBackupConfig(@"I:\", @"B:\Backup\Projects")
+            //.IgnorePaths(@"I:\AssetLibrary\SFX\DaVinci Resolve", @"I:\Movies\DaVinci Resolve", @"I:\SteamLibrary")
+            //.IgnoreFolders(".git", ".vs", "bin", "Build", "Builds", "Library", "Logs", "obj", "publish", "Temp", "UserSettings", ".gradle", ".idea", "build"),
+    };
 
     protected override void OnStartup(StartupEventArgs args) {
         base.OnStartup(args);
@@ -38,7 +38,7 @@ public partial class App : Application{
     }
 
     public static async Task LoadConfigs() {
-        BackupConfigs.Clear();
+        //BackupConfigs.Clear();
         using var stream = DataFile.OpenText();
 
         while(await stream.ReadLineAsync() is string backup) {

@@ -1,12 +1,11 @@
 ﻿using Ametrin.Utils;
-using Microsoft.VisualBasic.FileIO;
 using System.Diagnostics;
 
 namespace IBS.Core;
 
 public static class BackupManager{
     public static event Action? OnConfigChanged;
-    private static BackupHandler? Handler;
+    public static BackupHandler? Handler;
 
     public static void SetConfig(BackupHandler config){
         Handler = config;
@@ -17,35 +16,33 @@ public static class BackupManager{
         if(Handler is null) return ResultStatus.Failed;
         Handler.RecreateFolderStructure();
 
-        var files = Handler.GetFiles().ToArray();
-        float totalFiles = files.Length;
-        var synced = 0;
-        foreach(var file in files){
-            if(!file.IsSynced()) {
-                progress?.Report((synced/totalFiles, file.OriginInfo.FullName));
-                file.Sync();
-            }
-            synced++;
-        }
+        Handler.ForeachFile(file => file.Sync(), progress);
         return ResultStatus.Succeeded;
     }
 
     public static Result CleanBackup(IProgress<float>? progress = null) {
         if(Handler is null) return ResultStatus.Failed;
 
-        var files = Handler.GetFilesFromBackup().ToArray();
-        float totalFiles = files.Length;
-        var synced = 0;
-        foreach(var file in files) {
-            synced++;
-            progress?.Report(synced / totalFiles);
-            if(file.IsDeleted()) {
-                FileSystem.DeleteFile(file.BackupInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-                Trace.TraceInformation("deleted {0}", file.OriginInfo.FullName);
-                continue;
-            }
-            if(!file.CompareHashes()) Trace.TraceWarning("{0} and {1} do not match", file.OriginInfo.FullName, file.BackupInfo.FullName);
-        }
+        Handler.ForeachBackupFile((backupFileInfo, backupInfo) => {
+            var originInfo = Handler.Config.GetFileInfo(backupFileInfo.GetRelativePath(backupInfo));
+
+            if(originInfo.Exists && Handler.Config.ShouldInclude(originInfo)) return;
+
+            Trace.TraceInformation("deleted or excluded {0}", originInfo.FullName);
+            backupFileInfo.Trash();
+        } , progress);
+        
+        return ResultStatus.Succeeded;
+    }
+    
+    public static Result VerifyBackup(IProgress<float>? progress = null) {
+        if(Handler is null) return ResultStatus.Failed;
+
+        Handler.ForeachFile(file => {
+            if(file.CompareHashes()) return;
+            Trace.TraceWarning("{0} has broken backups or is broken...", file.OriginInfo.FullName);
+        }, progress);
+
         return ResultStatus.Succeeded;
     }
 }

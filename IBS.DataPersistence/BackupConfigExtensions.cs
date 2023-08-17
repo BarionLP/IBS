@@ -26,7 +26,7 @@ public static class BackupConfigExtensions {
             if(await JsonExtensions.ReadFromJsonFileAsync<BackupConfigFile>(targetFile) is not BackupConfigFile fo) return ResultStatus.ResultNull;
 
             if(!TypeRegistry.TryGetValue(fo.TypeID, out var type)) return ResultStatus.InvalidArgument;
-            if(JsonSerializer.Deserialize(fo.Body, type) is not IBackupConfig config) return ResultStatus.Failed;
+            if(JsonSerializer.Deserialize(fo.Body, type, JsonExtensions.DefaultOptions) is not IBackupConfig config) return ResultStatus.Failed;
             //config.ConfigFileInfo = targetFile;
             return Result<IBackupConfig>.Succeeded(config);
         } catch(Exception e) {
