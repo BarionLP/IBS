@@ -1,5 +1,7 @@
 /.vs
 /.vscode
-*/bin
-*/obj
 /TestData
+*/Properties
+*/obj
+*/bin
+*.user

@@ -3,7 +3,6 @@ using Ametrin.Utils;
 namespace IBS.Core;
 
 public sealed class BackedupFile{
-
     public FileInfo OriginInfo { get; }
     public FileInfo[] BackupInfos { get; }
     public string RelativePath { get; }
