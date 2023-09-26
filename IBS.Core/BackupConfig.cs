@@ -26,7 +26,7 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
 
         IgnoredPaths.Add(ConfigFileInfo.FullName);
 
-        if(!ConfigFileInfo.Exists) ConfigFileInfo.Create();
+        //if(!ConfigFileInfo.Exists) ConfigFileInfo.Create();
         //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create();
         IgnoreFolders("System Volume Information");
         IgnorePaths(ConfigFileInfo.FullName);
