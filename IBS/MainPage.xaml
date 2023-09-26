@@ -25,9 +25,9 @@
             </CollectionView>
         </VerticalStackLayout>
 
-        <VerticalStackLayout Grid.Row="1">
+        <VerticalStackLayout Grid.Row="1" Spacing="10" Margin="10">
             <Button Text="New Location" Clicked="AddLocation"/>
-            <CollectionView x:Name="BackupsView" SelectionChanged="BackupSelectionChanged">
+            <CollectionView x:Name="BackupsView" SelectionMode="Single" SelectionChanged="BackupSelectionChanged">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Label Text="{Binding OriginInfo}"/>
