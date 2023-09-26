@@ -23,7 +23,7 @@ public static class BackupConfigExtensions {
     }
     public static async Task<Result<IBackupConfig>> ReadAsync(FileInfo targetFile) {
         try {
-            if(await JsonExtensions.ReadFromJsonFileAsync<BackupConfigFile>(targetFile) is not BackupConfigFile fo) return ResultStatus.ResultNull;
+            if(await JsonExtensions.ReadFromJsonFileAsync<BackupConfigFile>(targetFile) is not BackupConfigFile fo) return ResultStatus.Null;
 
             if(!TypeRegistry.TryGetValue(fo.TypeID, out var type)) return ResultStatus.InvalidArgument;
             if(JsonSerializer.Deserialize(fo.Body, type, JsonExtensions.DefaultOptions) is not IBackupConfig config) return ResultStatus.Failed;

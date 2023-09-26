@@ -3,15 +3,37 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="IBS.MainPage">
 			 
-    <ScrollView>
-        <VerticalStackLayout 
-            Spacing="25" 
-            Padding="30,0" 
-            VerticalOptions="Center">
-                
+    <Grid RowDefinitions="64,*" ColumnDefinitions="256,*">
+        <Label Grid.ColumnSpan="2" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" FontSize="24">
+            Intelligent Backup System</Label>
 
-            
+        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="10" Margin="10">
+            <Button Text="Sync" Clicked="OnSync"/>
+            <Button Text="Clean" Clicked="OnClean"/>
+            <Button Text="Verify" Clicked="OnVerify"/>
+            <HorizontalStackLayout Spacing="5">
+                <Label>Status:</Label>
+                <Label x:Name = "StatusLabel">Idle</Label>
+            </HorizontalStackLayout>
+            <ProgressBar x:Name="ProgressDisplay"/>
+            <CollectionView x:Name="BackupLocations">
+                <FlyoutBase.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Add Backup" Clicked="AddBackupLocation" />
+                    </MenuFlyout>
+                </FlyoutBase.ContextFlyout>
+            </CollectionView>
         </VerticalStackLayout>
-    </ScrollView>
- 
+
+        <VerticalStackLayout Grid.Row="1">
+            <Button Text="New Location" Clicked="AddLocation"/>
+            <CollectionView x:Name="BackupsView" SelectionChanged="BackupSelectionChanged">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Label Text="{Binding OriginInfo}"/>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </Grid> 
 </ContentPage>
