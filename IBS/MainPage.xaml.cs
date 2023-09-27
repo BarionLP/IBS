@@ -11,6 +11,8 @@ public sealed partial class MainPage : ContentPage{
 	}
 
 	private async void OnSync(object sender, EventArgs e){
+		if (BackupManager.Handler is null) return;
+
 		var progress = new Progress<(float progress, string file)>(value => {
 			ProgressDisplay.Progress = value.progress;
 			StatusLabel.Text = value.file;
@@ -21,6 +23,8 @@ public sealed partial class MainPage : ContentPage{
 	}
 
 	private async void OnClean(object sender, EventArgs e){
+		if (BackupManager.Handler is null) return;
+
 		var progress = new Progress<float>(value => {
 			ProgressDisplay.Progress = value;
 		});
@@ -31,6 +35,8 @@ public sealed partial class MainPage : ContentPage{
 	}
 
 	private async void OnVerify(object sender, EventArgs e){
+		if (BackupManager.Handler is null) return;
+
 		var progress = new Progress<float>(value => {
 			ProgressDisplay.Progress = value;
 		});

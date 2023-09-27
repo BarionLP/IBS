@@ -39,11 +39,9 @@ public static class BackupConfigExtensions {
         [JsonInclude] public string TypeID { get; private set; }
         [JsonInclude] public JsonElement Body { get; private set; }
 
-        internal BackupConfigFile(string typeId, JsonElement body) {
+        public BackupConfigFile(string typeId, JsonElement body) {
             TypeID = typeId;
             Body = body;
         }
-
-        public BackupConfigFile() { }
     }
 }

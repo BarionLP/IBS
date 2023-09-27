@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IBS.Core", "IBS.Core\IBS.Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IBS.Core.Test.Unit", "IBS.Core.Test.Unit\IBS.Core.Test.Unit.csproj", "{0A2E6E75-AFC3-45B3-8AE6-ADCF0C21A60F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IBS.DataPersistence", "IBS.DataPersistence\IBS.DataPersistence.csproj", "{382E777E-4FF8-43E5-8962-EFDC8EA5F536}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ametrin.Utils", "..\..\Packages\Ametrin.Utils\Ametrin.Utils.csproj", "{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ametrin.Utils.WPF", "..\..\Packages\Ametrin.Utils.WPF\Ametrin.Utils.WPF.csproj", "{CD34399B-ED46-479D-8A0E-9D670BB179A5}"
@@ -33,10 +31,6 @@ Global
 		{0A2E6E75-AFC3-45B3-8AE6-ADCF0C21A60F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A2E6E75-AFC3-45B3-8AE6-ADCF0C21A60F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A2E6E75-AFC3-45B3-8AE6-ADCF0C21A60F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{382E777E-4FF8-43E5-8962-EFDC8EA5F536}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{382E777E-4FF8-43E5-8962-EFDC8EA5F536}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{382E777E-4FF8-43E5-8962-EFDC8EA5F536}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{382E777E-4FF8-43E5-8962-EFDC8EA5F536}.Release|Any CPU.Build.0 = Release|Any CPU
 		{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}.Release|Any CPU.ActiveCfg = Release|Any CPU

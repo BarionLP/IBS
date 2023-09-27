@@ -21,13 +21,15 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
     }
 
     public BlacklistBackupConfig(string originPath, string backupPath) : 
-        this(new (originPath)) {
+        this(new(originPath)) {
         (this as IBackupConfig).AddBackupLocation(backupPath);
 
         IgnoredPaths.Add(ConfigFileInfo.FullName);
 
-        //if(!ConfigFileInfo.Exists) ConfigFileInfo.Create();
-        //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create();
+        if(!ConfigFileInfo.Exists){
+            ConfigFileInfo.Create().Dispose();
+        }
+        //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create().Dispose();
         IgnoreFolders("System Volume Information");
         IgnorePaths(ConfigFileInfo.FullName);
     }

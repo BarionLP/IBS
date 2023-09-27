@@ -12,6 +12,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<SelfContained>true</SelfContained>
+ 		<PublishSingleFile>true</PublishSingleFile>
+
 		<!-- Display name -->
 		<ApplicationTitle>IBS</ApplicationTitle>
 
@@ -55,7 +57,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\IBS.Core\IBS.Core.csproj" />
 	  <ProjectReference Include="..\..\..\Packages\Ametrin.Utils\Ametrin.Utils.csproj" />
-	  <ProjectReference Include="..\IBS.DataPersistence\IBS.DataPersistence.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
