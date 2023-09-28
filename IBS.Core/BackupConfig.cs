@@ -10,7 +10,7 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
 
     public List<string> IgnoredPaths { get; } = new();
     public List<string> IgnoredFileExtensions { get; } = new();
-    public List<string> IgnoredKeywords { get; } = new();
+    public List<string> IgnoredPrefixes { get; } = new();
     public List<string> IgnoredFolderNames { get; } = new();
     public List<string> IgnoredFileNames { get; } = new();
 
@@ -26,11 +26,10 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
 
         IgnoredPaths.Add(ConfigFileInfo.FullName);
 
-        if(!ConfigFileInfo.Exists){
-            ConfigFileInfo.Create().Dispose();
-        }
+        if(!ConfigFileInfo.Exists) ConfigFileInfo.Create().Dispose();
         //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create().Dispose();
         IgnoreFolders("System Volume Information");
+        IgnorePrefix("$");
         IgnorePaths(ConfigFileInfo.FullName);
     }
 
@@ -41,7 +40,7 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
         BackupInfos = backupInfos;
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
-        IgnoredKeywords = ignoredKeywords;
+        IgnoredPrefixes = ignoredKeywords;
         IgnoredFolderNames = ignoredFolderNames;
         IgnoredFileNames = ignoredFileNames;
     }
@@ -59,8 +58,8 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
         if(info is DirectoryInfo directoryInfo) {
             if(IgnoredFolderNames.Contains(directoryInfo.Name)) return true;
         }
-        foreach(var keyword in IgnoredKeywords) {
-            if(info.FullName.Contains(keyword)) return true;
+        foreach(var prefix in IgnoredPrefixes) {
+            if(info.Name.StartsWith(prefix)) return true;
         }
 
         return false;
@@ -82,8 +81,8 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
         IgnoredFileNames.AddRange(fileNames);
         return this;
     }
-    public BlacklistBackupConfig IgnoreKeywords(params string[] keywords) {
-        IgnoredKeywords.AddRange(keywords);
+    public BlacklistBackupConfig IgnorePrefix(params string[] keywords) {
+        IgnoredPrefixes.AddRange(keywords);
         return this;
     }
 }
