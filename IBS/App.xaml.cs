@@ -1,38 +1,31 @@
-﻿using System.Diagnostics;
+﻿using Ametrin.Utils;
+using System.Diagnostics;
 using IBS.Core;
-using IBS.DataPersistence;
+using IBS.Core.Serialization;
 
 namespace IBS;
 
 public partial class App : Application{
+	public static event Action? OnBackupConfigsChange;
+	public static List<IBackupConfig> BackupConfigs { get; } = new();
+	
 	public App(){
 		InitializeComponent();
 		MainPage = new MainPage();
-	}
-
-	public static event Action? OnBackupConfigsChange;
-	public static List<IBackupConfig> BackupConfigs { get; } = new();
-
-	protected override void OnStart(){
-		base.OnStart();
 
 		IBSData.Init();
 		if (IBSData.DataFile.Exists){
-			_ = LoadConfigs();
+			_ = Init();
 		}
 	}
 
-	public static async Task LoadConfigs(bool clearOld = false){
-		if(clearOld) BackupConfigs.Clear();
-		using var stream = IBSData.DataFile.OpenText();
-
-		while (await stream.ReadLineAsync() is string backup){
-			var fileInfo = new FileInfo(backup);
-			if (!fileInfo.Exists) continue;
-			(await BackupConfigExtensions.ReadAsync(fileInfo)).Resolve(BackupConfigs.Add, (error) => Trace.TraceWarning("Failed Reading {0} with error {1}", fileInfo.FullName, error));
-		}
+	public static async Task Init(){
+		Trace.TraceInformation("inited");
+		BackupConfigs.AddRange(await BackupConfigExtensions.LoadConfigs());
 		OnBackupConfigsChange?.Invoke();
+		Trace.TraceInformation(BackupConfigs.Select(config=> config.OriginInfo.FullName).Dump(", "));
 	}
+
 
 	public static async Task SaveConfigs(){
 		using var stream = IBSData.DataFile.CreateText();

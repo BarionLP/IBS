@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui.Storage;
 using IBS.Core;
+using IBS.Core.Serialization;
 
 namespace IBS;
 
@@ -8,6 +9,7 @@ public sealed partial class MainPage : ContentPage{
 		InitializeComponent();
 		ResetProgress();
 		App.OnBackupConfigsChange += UpdateConfigSelection;
+		//UpdateConfigSelection();
 	}
 
 	private async void OnSync(object sender, EventArgs e){
@@ -68,6 +70,7 @@ public sealed partial class MainPage : ContentPage{
 		BackupManager.Handler.Config.AddBackupLocation(result.Folder.Path);
 		BackupLocations.ItemsSource = null;
 		BackupLocations.ItemsSource = BackupManager.Handler.Config.BackupInfos;
+		BackupManager.Handler.Config.Save(); 
 	}
 
 	private async void AddLocation(object sender, EventArgs e){	
