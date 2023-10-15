@@ -1,15 +1,17 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using IBS.Core;
-using IBS.DataPersistence;
+using IBS.Core.Serialization;
 
 namespace IBS;
 
 public partial class App : Application{
+	public static event Action? OnBackupConfigsChange;
+	public static List<IBackupConfig> BackupConfigs { get; } = new();
+	
 	public App(){
 		InitializeComponent();
 		MainPage = new MainPage();
-	}
 
 	//public static event Action? OnBackupConfigsChange;
 	public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = new();
@@ -19,7 +21,7 @@ public partial class App : Application{
 
 		IBSData.Init();
 		if (IBSData.DataFile.Exists){
-			_ = LoadConfigs();
+			_ = Init();
 		}
 	}
 
@@ -34,6 +36,7 @@ public partial class App : Application{
 		}
 		//OnBackupConfigsChange?.Invoke();
 	}
+
 
 	public static async Task SaveConfigs(){
 		using var stream = IBSData.DataFile.CreateText();

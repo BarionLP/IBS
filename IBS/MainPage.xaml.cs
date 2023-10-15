@@ -71,6 +71,7 @@ public sealed partial class MainPage : ContentPage{
 		BackupManager.Handler.Config.Save();
 		BackupLocations.ItemsSource = null;
 		BackupLocations.ItemsSource = BackupManager.Handler.Config.BackupInfos;
+		BackupManager.Handler.Config.Save(); 
 	}
 
 	private async void AddLocation(object sender, EventArgs e){	
