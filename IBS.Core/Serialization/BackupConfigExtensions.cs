@@ -1,5 +1,6 @@
 ﻿using Ametrin.Serialization;
 using Ametrin.Utils;
+using Ametrin.Utils.Registry;
 using IBS.Core;
 using System.Diagnostics;
 using System.Text.Json;
@@ -7,9 +8,11 @@ using System.Text.Json.Serialization;
 
 namespace IBS.DataPersistence;
 public static class BackupConfigExtensions {
-    private static readonly IReadOnlyDictionary<string, Type> TypeRegistry = new Dictionary<string, Type>() {
-        {typeof(BlacklistBackupConfig).FullName!, typeof(BlacklistBackupConfig)},
-    }.AsReadOnly();
+    private static readonly MutableTypeRegistry<string> TypeRegistry = new();
+    
+    static BackupConfigExtensions(){
+        TypeRegistry.TryRegister<BlacklistBackupConfig>();   
+    }
 
     public static void Save<T>(this T config) where T : IBackupConfig {
         var typeName = config.GetType().FullName!;
@@ -23,10 +26,10 @@ public static class BackupConfigExtensions {
     }
     public static async Task<Result<IBackupConfig>> ReadAsync(FileInfo targetFile) {
         try {
-            if(await JsonExtensions.ReadFromJsonFileAsync<BackupConfigFile>(targetFile) is not BackupConfigFile fo) return ResultStatus.Null;
+            if(!(await JsonExtensions.ReadFromJsonFileAsync<BackupConfigFile>(targetFile)).TryResolve(out var fo)) return ResultStatus.InvalidFile;
 
-            if(!TypeRegistry.TryGetValue(fo.TypeID, out var type)) return ResultStatus.InvalidArgument;
-            if(JsonSerializer.Deserialize(fo.Body, type, JsonExtensions.DefaultOptions) is not IBackupConfig config) return ResultStatus.Failed;
+            if(!TypeRegistry.TryGet(fo.TypeID).TryResolve(out var type)) return ResultStatus.InvalidArgument;
+            if(JsonSerializer.Deserialize(fo.Body, type, JsonExtensions.DefaultOptions) is not IBackupConfig config) return ResultStatus.InvalidFile;
             //config.ConfigFileInfo = targetFile;
             return Result<IBackupConfig>.Succeeded(config);
         } catch(Exception e) {

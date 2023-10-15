@@ -24,8 +24,6 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
         this(new(originPath)) {
         (this as IBackupConfig).AddBackupLocation(backupPath);
 
-        IgnoredPaths.Add(ConfigFileInfo.FullName);
-
         if(!ConfigFileInfo.Exists) ConfigFileInfo.Create().Dispose();
         //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create().Dispose();
         IgnoreFolders("System Volume Information");
@@ -34,13 +32,13 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
     }
 
     [JsonConstructor]
-    public BlacklistBackupConfig(DirectoryInfo originInfo, List<DirectoryInfo> backupInfos, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredKeywords, List<string> ignoredFolderNames, List<string> ignoredFileNames) : 
+    public BlacklistBackupConfig(DirectoryInfo originInfo, List<DirectoryInfo> backupInfos, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames) : 
         this(originInfo){
 
         BackupInfos = backupInfos;
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
-        IgnoredPrefixes = ignoredKeywords;
+        IgnoredPrefixes = ignoredPrefixes;
         IgnoredFolderNames = ignoredFolderNames;
         IgnoredFileNames = ignoredFileNames;
     }

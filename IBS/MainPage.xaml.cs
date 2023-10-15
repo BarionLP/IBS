@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui.Storage;
 using IBS.Core;
+using IBS.DataPersistence;
 
 namespace IBS;
 
@@ -7,7 +8,8 @@ public sealed partial class MainPage : ContentPage{
 	public MainPage(){
 		InitializeComponent();
 		ResetProgress();
-		App.OnBackupConfigsChange += UpdateConfigSelection;
+		BackupsView.ItemsSource = App.BackupConfigs;
+		//App.OnBackupConfigsChange += UpdateConfigSelection;
 	}
 
 	private async void OnSync(object sender, EventArgs e){
@@ -46,9 +48,9 @@ public sealed partial class MainPage : ContentPage{
 		FinishProgress();
 	}
 
-	public void UpdateConfigSelection(){
-		BackupsView.ItemsSource = App.BackupConfigs;
-	}
+	//public void UpdateConfigSelection(){
+	//	BackupsView.ItemsSource = App.BackupConfigs;
+	//}
 
 	private void BackupSelectionChanged(object sender, SelectionChangedEventArgs e){
 		if (BackupsView.SelectedItem is not BlacklistBackupConfig selected) return;
@@ -66,6 +68,7 @@ public sealed partial class MainPage : ContentPage{
 		if (!result.IsSuccessful) return;
 
 		BackupManager.Handler.Config.AddBackupLocation(result.Folder.Path);
+		BackupManager.Handler.Config.Save();
 		BackupLocations.ItemsSource = null;
 		BackupLocations.ItemsSource = BackupManager.Handler.Config.BackupInfos;
 	}

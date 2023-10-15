@@ -9,13 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IBS.Core.Test.Unit", "IBS.C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ametrin.Utils", "..\..\Packages\Ametrin.Utils\Ametrin.Utils.csproj", "{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ametrin.Utils.WPF", "..\..\Packages\Ametrin.Utils.WPF\Ametrin.Utils.WPF.csproj", "{CD34399B-ED46-479D-8A0E-9D670BB179A5}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ametrin.Serialization", "..\..\Packages\Ametrin.Serialization\Ametrin.Serialization.csproj", "{AFBEA065-35A4-4FA2-91F2-C6B34B0D263A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Barion.Forwarding", "..\Barion.Forwarding\Barion.Forwarding\Barion.Forwarding.csproj", "{810DE29F-4C73-4266-9409-5C7227F35841}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IBS", "IBS\IBS.csproj", "{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IBS", "IBS\IBS.csproj", "{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +33,6 @@ Global
 		{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43AE0DD4-A9F3-44CD-B552-A1EC1F15286D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CD34399B-ED46-479D-8A0E-9D670BB179A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD34399B-ED46-479D-8A0E-9D670BB179A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD34399B-ED46-479D-8A0E-9D670BB179A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD34399B-ED46-479D-8A0E-9D670BB179A5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AFBEA065-35A4-4FA2-91F2-C6B34B0D263A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AFBEA065-35A4-4FA2-91F2-C6B34B0D263A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AFBEA065-35A4-4FA2-91F2-C6B34B0D263A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -49,6 +43,7 @@ Global
 		{810DE29F-4C73-4266-9409-5C7227F35841}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

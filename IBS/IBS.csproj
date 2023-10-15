@@ -13,13 +13,14 @@
 		<Nullable>enable</Nullable>
 		<SelfContained>true</SelfContained>
  		<PublishSingleFile>true</PublishSingleFile>
+		<PublishReadyToRun>false</PublishReadyToRun>
 
 		<!-- Display name -->
 		<ApplicationTitle>IBS</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<!-- <ApplicationId>com.barion.ibs</ApplicationId> -->
-		<!-- <ApplicationIdGuid>0e0ddba8-a7b1-49da-9592-0371a5014e66</ApplicationIdGuid> -->
+		<ApplicationId>com.barion.ibs</ApplicationId>
+		<ApplicationIdGuid>0e0ddba8-a7b1-49da-9592-0371a5014e66</ApplicationIdGuid>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

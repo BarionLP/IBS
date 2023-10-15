@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using IBS.Core;
 using IBS.DataPersistence;
 
@@ -10,8 +11,8 @@ public partial class App : Application{
 		MainPage = new MainPage();
 	}
 
-	public static event Action? OnBackupConfigsChange;
-	public static List<IBackupConfig> BackupConfigs { get; } = new();
+	//public static event Action? OnBackupConfigsChange;
+	public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = new();
 
 	protected override void OnStart(){
 		base.OnStart();
@@ -31,7 +32,7 @@ public partial class App : Application{
 			if (!fileInfo.Exists) continue;
 			(await BackupConfigExtensions.ReadAsync(fileInfo)).Resolve(BackupConfigs.Add, (error) => Trace.TraceWarning("Failed Reading {0} with error {1}", fileInfo.FullName, error));
 		}
-		OnBackupConfigsChange?.Invoke();
+		//OnBackupConfigsChange?.Invoke();
 	}
 
 	public static async Task SaveConfigs(){
@@ -45,7 +46,7 @@ public partial class App : Application{
 
 	public static void AddBackupConfig(IBackupConfig config){
 		BackupConfigs.Add(config);
-		OnBackupConfigsChange?.Invoke();
+		//OnBackupConfigsChange?.Invoke();
 		_ = SaveConfigs();
 	}
 }
