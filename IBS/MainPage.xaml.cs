@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Maui.Storage;
 using IBS.Core;
-using IBS.DataPersistence;
+using IBS.Core.Serialization;
 
 namespace IBS;
 
@@ -43,7 +43,7 @@ public sealed partial class MainPage : ContentPage{
 			ProgressDisplay.Progress = value;
 		});
 		ResetProgress();
-		StatusLabel.Text = "Verifing...";
+		StatusLabel.Text = "Verifying...";
 		await Task.Run(() => BackupManager.VerifyBackup(progress));
 		FinishProgress();
 	}
@@ -71,7 +71,6 @@ public sealed partial class MainPage : ContentPage{
 		BackupManager.Handler.Config.Save();
 		BackupLocations.ItemsSource = null;
 		BackupLocations.ItemsSource = BackupManager.Handler.Config.BackupInfos;
-		BackupManager.Handler.Config.Save(); 
 	}
 
 	private async void AddLocation(object sender, EventArgs e){	
