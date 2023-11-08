@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Barion.Forwarding;
+﻿namespace Barion.Forwarding;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
 public sealed class ForwardingAttribute : Attribute { }
