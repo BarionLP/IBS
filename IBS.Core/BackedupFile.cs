@@ -1,4 +1,5 @@
 using Ametrin.Utils;
+using Ametrin.Utils.Optional;
 
 namespace IBS.Core;
 
@@ -43,20 +44,20 @@ public sealed class BackedupFile{
         }
     }
 
-    public Result Sync(){
+    public ResultFlag Sync(){
         try{
             if(IsDeleted()) {
                 RemoveBackups();
-                return ResultStatus.Succeeded;
+                return ResultFlag.Succeeded;
             }
 
             foreach(var backupInfo in BackupInfos) {
                 if(IsSynced(backupInfo)) continue;
                 OriginInfo.CopyTo(backupInfo, true);
             }
-            return ResultStatus.Succeeded;
+            return ResultFlag.Succeeded;
         } catch{
-            return ResultStatus.Failed;
+            return ResultFlag.Failed;
         }
     }
 

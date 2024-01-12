@@ -30,7 +30,7 @@ public partial class App : Application{
 		while (await stream.ReadLineAsync() is string backup){
 			var fileInfo = new FileInfo(backup);
 			if (!fileInfo.Exists) continue;
-			(await BackupConfigExtensions.ReadAsync(fileInfo)).Resolve(BackupConfigs.Add, (error) => Trace.TraceWarning("Failed Reading {0} with error {1}", fileInfo.FullName, error));
+			(await BackupConfigExtensions.ReadAsync(fileInfo)).Resolve(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
 		}
 		//OnBackupConfigsChange?.Invoke();
 	}

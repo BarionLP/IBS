@@ -1,5 +1,5 @@
 ﻿using Ametrin.Serialization;
-using Ametrin.Utils;
+using Ametrin.Utils.Optional;
 using Ametrin.Utils.Registry;
 using System.Diagnostics;
 using System.Text.Json;
@@ -20,9 +20,8 @@ public static class BackupConfigExtensions {
 
         while(await stream.ReadLineAsync() is string backup) {
             var fileInfo = new FileInfo(backup);
-            if(!fileInfo.Exists)
-                continue;
-            (await ReadAsync(fileInfo)).Resolve(result.Add, (error) => Trace.TraceWarning("Failed Reading {0} with error {1}", fileInfo.FullName, error));
+            if(!fileInfo.Exists) continue;
+            (await ReadAsync(fileInfo)).Resolve(result.Add, ()=> Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
         }
 
         return result;
@@ -38,28 +37,14 @@ public static class BackupConfigExtensions {
             Trace.TraceError(e.Message);
         }
     }
-    public static async Task<Result<IBackupConfig>> ReadAsync(FileInfo targetFile) {
-        try {
-            if(!(await JsonExtensions.ReadFromJsonFileAsync<BackupConfigFile>(targetFile)).TryResolve(out var fo)) return ResultStatus.InvalidFile;
-
-            if(!TypeRegistry.TryGet(fo.TypeID).TryResolve(out var type)) return ResultStatus.InvalidArgument;
-            
-            if(fo.Body.Deserialize(type, JsonExtensions.DefaultOptions) is not IBackupConfig config) return ResultStatus.InvalidFile;
-            //config.ConfigFileInfo = targetFile;
-            return Result<IBackupConfig>.Succeeded(config);
-        } catch(Exception e) {
-            Trace.TraceWarning(e.Message);
-            return ResultStatus.Failed;
-        }
+    public static Task<Option<IBackupConfig>> ReadAsync(FileInfo targetFile) {
+        return Task.Run(() => JsonExtensions.ReadFromJsonFile<BackupConfigFile>(targetFile)
+            .Map(fo => TypeRegistry.TryGet(fo.TypeID)
+            .Map(type => fo.Body.Deserialize(type, JsonExtensions.DefaultOptions).ToOption<IBackupConfig>())));
     }
 
-    private sealed class BackupConfigFile {
-        [JsonInclude] public string TypeID { get; private set; }
-        [JsonInclude] public JsonElement Body { get; private set; }
-
-        public BackupConfigFile(string typeId, JsonElement body) {
-            TypeID = typeId;
-            Body = body;
-        }
+    private sealed class BackupConfigFile(string typeId, JsonElement body) {
+        [JsonInclude] public string TypeID { get; private set; } = typeId;
+        [JsonInclude] public JsonElement Body { get; private set; } = body;
     }
 }

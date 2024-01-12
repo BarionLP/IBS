@@ -4,31 +4,20 @@ namespace IBS.Core;
 
 public sealed class BlacklistBackupConfig : IBackupConfig {
     public DirectoryInfo OriginInfo { get; }
-    public List<DirectoryInfo> BackupInfos { get; } = new();
+    public List<DirectoryInfo> BackupInfos { get; } = [];
     [JsonIgnore] public FileInfo ConfigFileInfo { get; }
     //public FileInfo MetaDataFileInfo { get; }
 
-    public List<string> IgnoredPaths { get; } = new();
-    public List<string> IgnoredFileExtensions { get; } = new();
-    public List<string> IgnoredPrefixes { get; } = new();
-    public List<string> IgnoredFolderNames { get; } = new();
-    public List<string> IgnoredFileNames { get; } = new();
+    public List<string> IgnoredPaths { get; } = [];
+    public List<string> IgnoredFileExtensions { get; } = [];
+    public List<string> IgnoredPrefixes { get; } = [];
+    public List<string> IgnoredFolderNames { get; } = [];
+    public List<string> IgnoredFileNames { get; } = [];
 
     private BlacklistBackupConfig(DirectoryInfo originInfo) {
         OriginInfo = originInfo;
         //MetaDataFileInfo = metaDataFileInfo;
         ConfigFileInfo = new(Path.Combine(OriginInfo.FullName, "backup_config.json"));
-    }
-
-    public BlacklistBackupConfig(string originPath, string backupPath) : 
-        this(new(originPath)) {
-        (this as IBackupConfig).AddBackupLocation(backupPath);
-
-        if(!ConfigFileInfo.Exists) ConfigFileInfo.Create().Dispose();
-        //if(!MetaDataFileInfo.Exists) MetaDataFileInfo.Create().Dispose();
-        IgnoreFolders("System Volume Information");
-        IgnorePrefix("$");
-        IgnorePaths(ConfigFileInfo.FullName);
     }
 
     [JsonConstructor]
@@ -41,6 +30,22 @@ public sealed class BlacklistBackupConfig : IBackupConfig {
         IgnoredPrefixes = ignoredPrefixes;
         IgnoredFolderNames = ignoredFolderNames;
         IgnoredFileNames = ignoredFileNames;
+    }
+
+    public static BlacklistBackupConfig Create(string originPath, string backupPath) {
+        var config = new BlacklistBackupConfig(new(originPath));
+
+        (config as IBackupConfig).AddBackupLocation(backupPath);
+
+        if(!config.ConfigFileInfo.Exists)
+            config.ConfigFileInfo.Create().Dispose();
+        //if(!config.MetaDataFileInfo.Exists) MetaDataFileInfo.Create().Dispose();
+        config.IgnoreFolders("System Volume Information", ".git");
+        config.IgnoreExtensions(".blend1");
+        config.IgnorePrefix("$");
+        //config.IgnorePaths(config.ConfigFileInfo.FullName);
+
+        return config;
     }
 
     public bool ShouldInclude(FileSystemInfo info) => !ShouldExclude(info);
@@ -95,6 +100,7 @@ public interface IBackupConfig {
     public bool ShouldExclude(FileSystemInfo info);
 
     public virtual FileInfo GetFileInfo(string relativePath) => new(Path.Combine(OriginInfo.FullName, relativePath));
+    public virtual DirectoryInfo GetFolderInfo(string relativePath) => new(Path.Combine(OriginInfo.FullName, relativePath));
     public virtual IEnumerable<FileInfo> GetBackupFiles(string relativePath) {
         foreach(var backupInfo in BackupInfos) {
             if(!backupInfo.Exists) continue;

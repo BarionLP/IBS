@@ -5,46 +5,46 @@ using IBS.Core.Serialization;
 namespace IBS;
 
 public sealed partial class MainPage : ContentPage{
+	private readonly Progress<float> _progress;
+	private readonly Progress<string> _workingOn;
+	
 	public MainPage(){
 		InitializeComponent();
 		ResetProgress();
 		BackupsView.ItemsSource = App.BackupConfigs;
 		//App.OnBackupConfigsChange += UpdateConfigSelection;
-	}
+		_progress = new(value => {
+            ProgressDisplay.Progress = value;
+        });
+        _workingOn = new Progress<string>(value => {
+            StatusLabel.Text = value;
+        });
+    }
 
 	private async void OnSync(object sender, EventArgs e){
 		if (BackupManager.Handler is null) return;
 
-		var progress = new Progress<(float progress, string file)>(value => {
-			ProgressDisplay.Progress = value.progress;
-			StatusLabel.Text = value.file;
-		});
 		ResetProgress(); 
-		await Task.Run(() => BackupManager.SyncBackup(progress));
+		StatusLabel.Text = "Syncing...";
+		await Task.Run(() => BackupManager.SyncBackup(_progress, _workingOn));
 		FinishProgress();
 	}
 
 	private async void OnClean(object sender, EventArgs e){
 		if (BackupManager.Handler is null) return;
 
-		var progress = new Progress<float>(value => {
-			ProgressDisplay.Progress = value;
-		});
-		ResetProgress();
+        ResetProgress();
 		StatusLabel.Text = "Cleaning...";
-		await Task.Run(() => BackupManager.CleanBackup(progress));
+		await Task.Run(() => BackupManager.CleanBackup(_progress, _workingOn));
 		FinishProgress();
 	}
 
 	private async void OnVerify(object sender, EventArgs e){
 		if (BackupManager.Handler is null) return;
 
-		var progress = new Progress<float>(value => {
-			ProgressDisplay.Progress = value;
-		});
 		ResetProgress();
 		StatusLabel.Text = "Verifying...";
-		await Task.Run(() => BackupManager.VerifyBackup(progress));
+		await Task.Run(() => BackupManager.VerifyBackup(_progress));
 		FinishProgress();
 	}
 
@@ -76,12 +76,13 @@ public sealed partial class MainPage : ContentPage{
 	private async void AddLocation(object sender, EventArgs e){	
 		var source = new CancellationTokenSource();
 		var token = source.Token;
+
 		var originFolder = await FolderPicker.Default.PickAsync(token);
 		if (!originFolder.IsSuccessful) return;
 		var backupFolder = await FolderPicker.Default.PickAsync(token);
 		if (!backupFolder.IsSuccessful) return;
 		
-		App.AddBackupConfig(new BlacklistBackupConfig(originFolder.Folder.Path, backupFolder.Folder.Path));
+		App.AddBackupConfig(BlacklistBackupConfig.Create(originFolder.Folder.Path, backupFolder.Folder.Path));
 	}
 
 
