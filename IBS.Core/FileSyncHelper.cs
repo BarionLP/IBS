@@ -1,23 +1,30 @@
-﻿using Ametrin.Utils;
+﻿namespace IBS.Core;
 
-namespace IBS.Core;
-
-public static class FileSyncHelper{
-    public static bool AreFilesInSync(FileInfo mainFileInfo, IEnumerable<FileInfo> backupFileInfos){
-        foreach(var backupFileInfo in backupFileInfos) {
-            if(!AreFilesInSync(mainFileInfo, backupFileInfo)) return false;
+public static class FileSyncHelper
+{
+    public static bool AreFilesInSync(FileInfo mainFileInfo, IEnumerable<FileInfo> backupFileInfos)
+    {
+        foreach (var backupFileInfo in backupFileInfos)
+        {
+            if (!AreFilesInSync(mainFileInfo, backupFileInfo))
+                return false;
         }
         return true;
     }
-    
-    public static bool AreFilesInSync(FileInfo mainFileInfo, FileInfo backupFileInfo){
-        if(!backupFileInfo.Exists) return false;
+
+    public static bool AreFilesInSync(FileInfo mainFileInfo, FileInfo backupFileInfo)
+    {
+        if (!backupFileInfo.Exists)
+            return false;
         return mainFileInfo.Length == backupFileInfo.Length && mainFileInfo.LastWriteTimeUtc == backupFileInfo.LastWriteTimeUtc;
     }
 
-    public static bool CompareHashes(FileInfo mainFileInfo, IEnumerable<FileInfo> backupFileInfos) {
-        foreach(var backupFileInfo in backupFileInfos) {
-            if(!mainFileInfo.CompareHash(backupFileInfo)) return false;
+    public static bool CompareHashes(FileInfo mainFileInfo, IEnumerable<FileInfo> backupFileInfos)
+    {
+        foreach (var backupFileInfo in backupFileInfos)
+        {
+            if (!mainFileInfo.CompareHash(backupFileInfo))
+                return false;
         }
 
         return true;

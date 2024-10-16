@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Barion.Forwarding", "..\Bar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IBS", "IBS\IBS.csproj", "{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ametrin.Optional", "..\..\Packages\Ametrin.Optional\src\Ametrin.Optional.csproj", "{A9E6E5BA-B80A-4848-9EAC-24E6FB632A7B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6ABE1CEE-06B9-4952-8771-12EAE0F5502F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9E6E5BA-B80A-4848-9EAC-24E6FB632A7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9E6E5BA-B80A-4848-9EAC-24E6FB632A7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9E6E5BA-B80A-4848-9EAC-24E6FB632A7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9E6E5BA-B80A-4848-9EAC-24E6FB632A7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
