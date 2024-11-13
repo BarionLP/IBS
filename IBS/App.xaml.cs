@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
-using Ametrin.Utils.Optional;
 using IBS.Core;
 using IBS.Core.Serialization;
 
@@ -15,7 +14,14 @@ public partial class App : Application
     }
 
     //public static event Action? OnBackupConfigsChange;
-    public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = new();
+    public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = [];
+
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        var window = base.CreateWindow(activationState);
+        //window.Page = new MainPage();
+        return window;
+    }
 
     protected override void OnStart()
     {
@@ -39,7 +45,7 @@ public partial class App : Application
             var fileInfo = new FileInfo(backup);
             if (!fileInfo.Exists)
                 continue;
-            (await BackupConfigExtensions.ReadAsync(fileInfo)).Resolve(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
+            (await BackupConfigExtensions.ReadAsync(fileInfo)).Consume(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
         }
         //OnBackupConfigsChange?.Invoke();
     }

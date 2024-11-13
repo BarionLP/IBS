@@ -25,7 +25,7 @@ public static class BackupConfigExtensions
             var fileInfo = new FileInfo(backup);
             if (!fileInfo.Exists)
                 continue;
-            (await ReadAsync(fileInfo)).Resolve(result.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
+            (await ReadAsync(fileInfo)).Consume(result.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
         }
 
         return result;
@@ -49,8 +49,8 @@ public static class BackupConfigExtensions
     public static Task<Option<IBackupConfig>> ReadAsync(FileInfo targetFile)
     {
         return Task.Run(() => JsonExtensions.ReadFromJsonFile<BackupConfigFile>(targetFile)
-            .Map(fo => TypeRegistry.TryGet(fo.TypeID)
-            .Map(type => fo.Body.Deserialize(type, JsonExtensions.DefaultOptions).ToOption<IBackupConfig>())));
+            .Select(fo => TypeRegistry.TryGet(fo.TypeID)
+            .Select(type => fo.Body.Deserialize(type, JsonExtensions.DefaultOptions).ToOption<IBackupConfig>())));
     }
 
     private sealed class BackupConfigFile(string typeId, JsonElement body)

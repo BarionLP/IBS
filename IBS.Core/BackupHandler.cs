@@ -1,6 +1,3 @@
-using Ametrin.Utils;
-using Ametrin.Utils.Optional;
-
 namespace IBS.Core;
 
 public sealed class BackupHandler(IBackupConfig backupConfig)
@@ -35,7 +32,7 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
         }
     }
 
-    public ResultFlag RecreateFolderStructure()
+    public Option RecreateFolderStructure()
     {
         Config.ForeachBackup(backupInfo =>
         {
@@ -47,7 +44,7 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
             }
         });
 
-        return ResultFlag.Succeeded;
+        return true;
     }
 
     public void ForeachFile(Action<BackedupFile> action, IProgress<float>? progress)

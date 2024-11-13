@@ -55,14 +55,14 @@ public sealed class BackedupFile
         }
     }
 
-    public ResultFlag Sync()
+    public Option Sync()
     {
         try
         {
             if (IsDeleted())
             {
                 RemoveBackups();
-                return ResultFlag.Succeeded;
+                return true;
             }
 
             foreach (var backupInfo in BackupInfos)
@@ -71,11 +71,11 @@ public sealed class BackedupFile
                     continue;
                 OriginInfo.CopyTo(backupInfo, true);
             }
-            return ResultFlag.Succeeded;
+            return true;
         }
         catch
         {
-            return ResultFlag.Failed;
+            return false;
         }
     }
 

@@ -13,10 +13,10 @@ public static class BackupManager
         OnConfigChanged?.Invoke();
     }
 
-    public static ResultFlag SyncBackup(IProgress<float>? progress = null, IProgress<string>? workingOn = null)
+    public static Option SyncBackup(IProgress<float>? progress = null, IProgress<string>? workingOn = null)
     {
         if (Handler is null)
-            return ResultFlag.Failed;
+            return false;
         Handler.RecreateFolderStructure();
 
         Handler.ForeachFile(file =>
@@ -27,13 +27,13 @@ public static class BackupManager
             workingOn?.Report(file.RelativePath);
             file.Sync();
         }, progress);
-        return ResultFlag.Succeeded;
+        return true;
     }
 
-    public static ResultFlag CleanBackup(IProgress<float>? progress = null, IProgress<string>? workingOn = null)
+    public static Option CleanBackup(IProgress<float>? progress = null, IProgress<string>? workingOn = null)
     {
         if (Handler is null)
-            return ResultFlag.Failed;
+            return false;
 
         //Handler.ForeachBackupFolder((backupFolderInfo, backupInfo) => {
         //    var originInfo = Handler.Config.GetFolderInfo(backupFolderInfo.GetRelativePath(backupInfo));
@@ -57,13 +57,13 @@ public static class BackupManager
             backupFileInfo.Trash();
         }, progress);
 
-        return ResultFlag.Succeeded;
+        return true;
     }
 
-    public static ResultFlag VerifyBackup(IProgress<float>? progress = null)
+    public static Option VerifyBackup(IProgress<float>? progress = null)
     {
         if (Handler is null)
-            return ResultFlag.Failed;
+            return false;
 
         Handler.ForeachFile(file =>
         {
@@ -72,6 +72,6 @@ public static class BackupManager
             Trace.TraceWarning("{0} has broken backups or is broken...", file.OriginInfo.FullName);
         }, progress);
 
-        return ResultFlag.Succeeded;
+        return true;
     }
 }

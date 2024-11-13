@@ -54,12 +54,11 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\IBS.Core\IBS.Core.csproj" />
-	  <ProjectReference Include="..\..\..\Packages\Ametrin.Utils\Ametrin.Utils.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="CommunityToolkit.Maui" Version="9.1.0" />
-	  <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.92" />
+	  <PackageReference Include="CommunityToolkit.Maui" Version="9.1.1" />
+	  <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
