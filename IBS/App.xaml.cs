@@ -7,21 +7,15 @@ namespace IBS;
 
 public partial class App : Application
 {
+    //public static event Action? OnBackupConfigsChange;
+    public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = [];
+ 
     public App()
     {
         InitializeComponent();
-        MainPage = new MainPage();
     }
-
-    //public static event Action? OnBackupConfigsChange;
-    public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = [];
-
-    protected override Window CreateWindow(IActivationState? activationState)
-    {
-        var window = base.CreateWindow(activationState);
-        //window.Page = new MainPage();
-        return window;
-    }
+    
+    protected override Window CreateWindow(IActivationState? activationState) => new Window(new MainPage());
 
     protected override void OnStart()
     {
