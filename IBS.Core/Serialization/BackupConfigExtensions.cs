@@ -1,5 +1,4 @@
 ﻿using Ametrin.Serialization;
-using Ametrin.Utils.Registry;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -8,11 +7,11 @@ namespace IBS.Core.Serialization;
 
 public static class BackupConfigExtensions
 {
-    private static readonly MutableTypeRegistry<string> TypeRegistry = new();
+    private static readonly Dictionary<string, Type> TypeRegistry = new();
 
     static BackupConfigExtensions()
     {
-        TypeRegistry.TryRegister<BlacklistBackupConfig>();
+        TypeRegistry.TryAdd<BlacklistBackupConfig>();
     }
 
     public static async Task<List<IBackupConfig>> LoadConfigs()
@@ -49,8 +48,8 @@ public static class BackupConfigExtensions
     public static Task<Option<IBackupConfig>> ReadAsync(FileInfo targetFile)
     {
         return Task.Run(() => JsonExtensions.ReadFromJsonFile<BackupConfigFile>(targetFile)
-            .Select(fo => TypeRegistry.TryGet(fo.TypeID)
-            .Select(type => fo.Body.Deserialize(type, JsonExtensions.DefaultOptions).ToOption<IBackupConfig>())));
+            .Map(fo => TypeRegistry.TryGetValue(fo.TypeID)
+            .Map(type => fo.Body.Deserialize(type, JsonExtensions.DefaultOptions).ToOption<IBackupConfig>())));
     }
 
     private sealed class BackupConfigFile(string typeId, JsonElement body)
