@@ -1,0 +1,51 @@
+﻿<Window x:Class="IBS.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:IBS"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Orientation="Vertical">
+            <Button Content="New Location" Click="AddBackupConfig"/>
+            <ListView x:Name="BackupsView" SelectionMode="Single" SelectionChanged="BackupSelectionChanged">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Label Content="{Binding OriginInfo}"/>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Vertical">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 0"/>
+                <Button Grid.Column="1" Content="Clean" Click="Clean_Click" HorizontalAlignment="Stretch"/>
+                <Button Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="4 0"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Margin="4 8 0 0">
+                <Label>Status:</Label>
+                <Label x:Name = "StatusLabel">Idle</Label>
+            </StackPanel>
+            <ProgressBar x:Name="ProgressDisplay"/>
+            <ListView x:Name="BackupLocations">
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add Location" Click="AddBackupLocation" />
+                    </ContextMenu>
+                </ListView.ContextMenu>
+            </ListView>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -7,7 +7,7 @@ public static class BackupManager
     public static event Action? OnConfigChanged;
     public static BackupHandler? Handler;
 
-    public static void SetConfig(BackupHandler config)
+    public static void SetHandler(BackupHandler config)
     {
         Handler = config;
         OnConfigChanged?.Invoke();

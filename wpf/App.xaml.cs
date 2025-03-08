@@ -1,26 +1,18 @@
-﻿using System.Collections.ObjectModel;
+﻿using IBS.Core.Serialization;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using IBS.Core;
-using IBS.Core.Serialization;
+using System.IO;
+using System.Windows;
 
 namespace IBS;
 
 public partial class App : Application
 {
-    //public static event Action? OnBackupConfigsChange;
     public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = [];
- 
-    public App()
-    {
-        InitializeComponent();
-    }
-    
-    protected override Window CreateWindow(IActivationState? activationState) => new Window(new MainPage());
 
-    protected override void OnStart()
+    protected override void OnStartup(StartupEventArgs e)
     {
-        base.OnStart();
-
+        base.OnStartup(e);
         IBSData.Init();
         if (IBSData.DataFile.Exists)
         {
@@ -28,12 +20,13 @@ public partial class App : Application
         }
     }
 
-    public static async Task LoadConfigs(bool clearOld = false)
+    public static async Task LoadConfigs(bool clearOld = true)
     {
         if (clearOld)
         {
             BackupConfigs.Clear();
         }
+
         using var stream = IBSData.DataFile.OpenText();
 
         while (await stream.ReadLineAsync() is string backup)
@@ -43,8 +36,8 @@ public partial class App : Application
                 continue;
             (await BackupConfigExtensions.ReadAsync(fileInfo)).Consume(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
         }
-        //OnBackupConfigsChange?.Invoke();
     }
+
 
     public static async Task SaveConfigs()
     {
@@ -60,7 +53,7 @@ public partial class App : Application
     public static void AddBackupConfig(IBackupConfig config)
     {
         BackupConfigs.Add(config);
-        //OnBackupConfigsChange?.Invoke();
         _ = SaveConfigs();
     }
 }
+

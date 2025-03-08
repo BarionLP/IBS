@@ -47,7 +47,6 @@ public sealed class BlacklistBackupConfig : IBackupConfig
         config.IgnoreFolders("System Volume Information", ".git");
         config.IgnoreExtensions(".blend1");
         config.IgnorePrefix("$");
-        //config.IgnorePaths(config.ConfigFileInfo.FullName);
 
         return config;
     }
@@ -56,11 +55,9 @@ public sealed class BlacklistBackupConfig : IBackupConfig
 
     public bool ShouldExclude(FileSystemInfo info)
     {
-        if (info.Name.StartsWith('$'))
-            return true;
-
         if (IgnoredPaths.Contains(info.FullName))
             return true;
+     
         if (info is FileInfo fileInfo)
         {
             if (IgnoredFileExtensions.Contains(fileInfo.Extension))
@@ -68,11 +65,13 @@ public sealed class BlacklistBackupConfig : IBackupConfig
             if (IgnoredFileNames.Contains(fileInfo.Name))
                 return true;
         }
+        
         if (info is DirectoryInfo directoryInfo)
         {
             if (IgnoredFolderNames.Contains(directoryInfo.Name))
                 return true;
         }
+        
         foreach (var prefix in IgnoredPrefixes)
         {
             if (info.Name.StartsWith(prefix))
@@ -82,27 +81,27 @@ public sealed class BlacklistBackupConfig : IBackupConfig
         return false;
     }
 
-    public BlacklistBackupConfig IgnoreFolders(params string[] folderName)
+    public BlacklistBackupConfig IgnoreFolders(params ReadOnlySpan<string> folderName)
     {
         IgnoredFolderNames.AddRange(folderName);
         return this;
     }
-    public BlacklistBackupConfig IgnorePaths(params string[] path)
+    public BlacklistBackupConfig IgnorePaths(params ReadOnlySpan<string> path)
     {
         IgnoredPaths.AddRange(path);
         return this;
     }
-    public BlacklistBackupConfig IgnoreExtensions(params string[] extensions)
+    public BlacklistBackupConfig IgnoreExtensions(params ReadOnlySpan<string> extensions)
     {
         IgnoredFileExtensions.AddRange(extensions);
         return this;
     }
-    public BlacklistBackupConfig IgnoreFiles(params string[] fileNames)
+    public BlacklistBackupConfig IgnoreFiles(params ReadOnlySpan<string> fileNames)
     {
         IgnoredFileNames.AddRange(fileNames);
         return this;
     }
-    public BlacklistBackupConfig IgnorePrefix(params string[] keywords)
+    public BlacklistBackupConfig IgnorePrefix(params ReadOnlySpan<string> keywords)
     {
         IgnoredPrefixes.AddRange(keywords);
         return this;
@@ -132,15 +131,18 @@ public interface IBackupConfig
         }
     }
 
-    public virtual IEnumerable<DirectoryInfo> GetDirectories() => GetValidDirectories(OriginInfo);
-    public virtual IEnumerable<FileInfo> GetFiles() => GetDirectories().SelectMany(GetValidFiles);
+    public virtual IEnumerable<DirectoryInfo> GetDirectories() => GetDirectoriesToBackup(OriginInfo);
+    public virtual IEnumerable<FileInfo> GetFiles() => GetDirectories().SelectMany(GetFilesToBackup);
     public virtual IEnumerable<DirectoryInfo> GetBackupDirectories()
     {
         foreach (var backupInfo in BackupInfos)
         {
             backupInfo.Refresh();
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
+
             foreach (var folder in backupInfo.EnumerateDirectories("*", SearchOption.AllDirectories))
             {
                 yield return folder;
@@ -151,34 +153,43 @@ public interface IBackupConfig
     {
         foreach (var backupInfo in BackupInfos)
         {
+            backupInfo.Refresh();
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
+
             foreach (var file in backupInfo.EnumerateFiles("*", SearchOption.AllDirectories))
             {
                 yield return file;
             }
         }
     }
-    protected virtual IEnumerable<DirectoryInfo> GetValidDirectories(DirectoryInfo directoryInfo)
+    protected virtual IEnumerable<DirectoryInfo> GetDirectoriesToBackup(DirectoryInfo directoryInfo)
     {
         yield return directoryInfo;
         foreach (var directory in directoryInfo.EnumerateDirectories("*", SearchOption.TopDirectoryOnly))
         {
             if (ShouldExclude(directory))
+            {
                 continue;
+            }
 
-            foreach (var subDirectory in GetValidDirectories(directory))
+            foreach (var subDirectory in GetDirectoriesToBackup(directory))
             {
                 yield return subDirectory;
             }
         }
     }
-    protected virtual IEnumerable<FileInfo> GetValidFiles(DirectoryInfo directoryInfo)
+    protected virtual IEnumerable<FileInfo> GetFilesToBackup(DirectoryInfo directoryInfo)
     {
         foreach (var file in directoryInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly))
         {
             if (ShouldExclude(file))
+            {
                 continue;
+            }
+
             yield return file;
         }
     }
@@ -188,7 +199,10 @@ public interface IBackupConfig
         foreach (var backupInfo in BackupInfos)
         {
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
+
             action(backupInfo);
         }
     }
@@ -196,8 +210,7 @@ public interface IBackupConfig
     public virtual void AddBackupLocation(string path)
     {
         var info = new DirectoryInfo(Path.Combine(path, "_Storage"));
-        if (!info.Exists)
-            info.Create();
+        info.CreateIfNotExists();
         BackupInfos.Add(info);
     }
 }
