@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="../../Packages/Ametrin.Utils.WPF/Ametrin.Utils.WPF.csproj" />
+  <Project Path="../../Packages/Ametrin.Utils/src/Ametrin.Utils.csproj" />
+  <Project Path="IBS.Core.Test.Unit/IBS.Core.Test.Unit.csproj" />
+  <Project Path="IBS.Core/IBS.Core.csproj" />
+  <Project Path="IBS/IBS.Maui.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="wpf/IBS.csproj" />
+</Solution>
