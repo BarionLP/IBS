@@ -5,8 +5,8 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
-	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-	<PublishSingleFile>true</PublishSingleFile>
+	  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	  <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

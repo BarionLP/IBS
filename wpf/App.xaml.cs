@@ -1,5 +1,4 @@
-﻿using IBS.Core.Serialization;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -35,7 +34,7 @@ public partial class App : Application
             var fileInfo = new FileInfo(backup);
             if (!fileInfo.Exists)
                 continue;
-            await BackupConfigExtensions.ReadAsync(fileInfo).ConsumeAsync(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
+            await BackupConfigExtensions.ReadAsync(fileInfo).Consume(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
         }
     }
 

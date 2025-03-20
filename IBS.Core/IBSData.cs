@@ -8,8 +8,6 @@ public static class IBSData
 
     public static void Init()
     {
-        if (!DataDirectory.Exists)
-            DataDirectory.Create();
-        //if(!LogsDirectory.Exists) LogsDirectory.Create();
+        DataDirectory.CreateIfNotExists();
     }
 }

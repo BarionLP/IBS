@@ -5,7 +5,7 @@ namespace IBS.Core;
 public static class BackupManager
 {
     public static event Action? OnConfigChanged;
-    public static BackupHandler? Handler;
+    public static BackupHandler? Handler { get; set; }
 
     public static void SetHandler(BackupHandler config)
     {
@@ -50,7 +50,9 @@ public static class BackupManager
             var originInfo = Handler.Config.GetFileInfo(backupFileInfo.GetRelativePath(backupInfo));
 
             if (originInfo.Exists && Handler.Config.ShouldInclude(originInfo))
+            {
                 return;
+            }
 
             workingOn?.Report(originInfo.FullName);
             Trace.TraceInformation("deleted or excluded {0}", originInfo.FullName);
@@ -63,12 +65,17 @@ public static class BackupManager
     public static Option VerifyBackup(IProgress<float>? progress = null)
     {
         if (Handler is null)
+        {
             return false;
+        }
 
         Handler.ForeachFile(file =>
         {
             if (file.CompareHashes())
+            {
                 return;
+            }
+
             Trace.TraceWarning("{0} has broken backups or is broken...", file.OriginInfo.FullName);
         }, progress);
 

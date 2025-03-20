@@ -4,19 +4,9 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
 {
     public IBackupConfig Config { get; set; } = backupConfig;
 
-    public BackedupFile GetFile(string relativePath)
-    {
-        return new(Config, relativePath);
-    }
-
-    public BackedupFile GetFile(FileInfo origin)
-    {
-        return GetFile(origin, Config.OriginInfo);
-    }
-    public BackedupFile GetFile(FileInfo fileInfo, DirectoryInfo relativeTo)
-    {
-        return GetFile(fileInfo.GetRelativePath(relativeTo));
-    }
+    public BackedupFile GetFile(string relativePath) => new(Config, relativePath);
+    public BackedupFile GetFile(FileInfo origin) => GetFile(origin, Config.OriginInfo);
+    public BackedupFile GetFile(FileInfo fileInfo, DirectoryInfo relativeTo) => GetFile(fileInfo.GetRelativePath(relativeTo));
 
     public IEnumerable<BackedupFile> GetFiles() => Config.GetFiles().Select(GetFile);
     public IEnumerable<FileInfo> GetBackupFiles()
@@ -24,7 +14,10 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
         foreach (var backupInfo in Config.BackupInfos)
         {
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
+
             foreach (var backupFileInfo in backupInfo.EnumerateFiles())
             {
                 yield return backupFileInfo;
@@ -39,8 +32,7 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
             foreach (var directory in Config.GetDirectories())
             {
                 var backupDirectory = new DirectoryInfo(Path.Combine(backupInfo.FullName, directory.GetRelativePath(Config.OriginInfo)));
-                if (!backupDirectory.Exists)
-                    backupDirectory.Create();
+                backupDirectory.CreateIfNotExists();
             }
         });
 
@@ -86,7 +78,9 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
         foreach (var backupInfo in Config.BackupInfos)
         {
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
 
             var backupFolders = backupInfo.GetDirectories("*", SearchOption.AllDirectories);
             float totalFiles = backupFolders.Length;
@@ -106,7 +100,9 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
         foreach (var backupInfo in Config.BackupInfos)
         {
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
 
             foreach (var backupFolderInfo in backupInfo.GetDirectories("*", SearchOption.AllDirectories))
             {
@@ -128,7 +124,9 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
         foreach (var backupInfo in Config.BackupInfos)
         {
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
 
             var backupFiles = backupInfo.GetFiles("*", SearchOption.AllDirectories);
             float totalFiles = backupFiles.Length;
@@ -148,7 +146,9 @@ public sealed class BackupHandler(IBackupConfig backupConfig)
         foreach (var backupInfo in Config.BackupInfos)
         {
             if (!backupInfo.Exists)
+            {
                 continue;
+            }
 
             foreach (var backupFileInfo in backupInfo.EnumerateFiles("*", SearchOption.AllDirectories))
             {

@@ -1,6 +1,7 @@
 namespace IBS.Core.Test.Unit;
 
-public sealed class FileSyncTests{
+public sealed class FileSyncTests
+{
     public const string ORIGIN_PATH = "../../../Data/Origin/";
     public const string BACKUP_PATH = "../../../Data/Backup/";
 }
