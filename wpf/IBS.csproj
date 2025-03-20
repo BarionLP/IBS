@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Packages\Ametrin.Utils.WPF\Ametrin.Utils.WPF.csproj" />
-    <ProjectReference Include="..\IBS.Core\IBS.Core.csproj" />
+    <ProjectReference Include="..\core\IBS.Core.csproj" />
   </ItemGroup>
 
 </Project>

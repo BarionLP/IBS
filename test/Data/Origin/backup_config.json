@@ -1,0 +1,18 @@
+{
+  "OriginInfo": "C:\\Users\\Nation\\Documents\\Coding\\Tools\\IBS\\test\\Data\\Origin",
+  "BackupInfos": [
+    "C:\\Users\\Nation\\Documents\\Coding\\Tools\\IBS\\test\\Data\\Backup\\_Storage"
+  ],
+  "IgnoredPaths": [],
+  "IgnoredFileExtensions": [
+    ".blend1"
+  ],
+  "IgnoredPrefixes": [
+    "$"
+  ],
+  "IgnoredFolderNames": [
+    "System Volume Information",
+    ".git"
+  ],
+  "IgnoredFileNames": []
+}

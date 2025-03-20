@@ -1,4 +1,4 @@
-namespace IBS.Core.Test.Unit;
+namespace IBS.Test;
 
 public sealed class FileSyncTests
 {
