@@ -1,7 +1,7 @@
 using IBS.Core;
 using IBS.Core.Serialization;
 
-var config = BackupConfig.Create("Data/Origin", "Data/Backup");
+// var config = BackupConfig.Create("Data/Origin", "Data/Backup");
+var config = BackupConfigSerializer.Load(new ("Data/Origin/backup_config.json"));
 
-BackupConfigSerializer.Save(config);
 FileSyncer.AdvancedSync(config);

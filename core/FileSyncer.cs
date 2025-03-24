@@ -46,7 +46,7 @@ public static class FileSyncer
             foreach (var file in backupFiles.SelectMany(static s => s.files))
             {
                 Console.WriteLine($"marked {file.Name} deleted");
-                file.MoveTo($"{file.Name}.deleted");
+                file.MoveTo($"{file.FullName}.deleted");
             }
 
             foreach (var sub in directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly))
