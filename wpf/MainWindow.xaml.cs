@@ -9,17 +9,18 @@ public partial class MainWindow : Window
 {
     private readonly Progress<float> _progress;
     private readonly Progress<string> _workingOn;
+    private BackupConfig _selectedBackupConfig;
     public MainWindow()
     {
         InitializeComponent();
         ResetProgress();
         BackupsView.ItemsSource = App.BackupConfigs;
-        
+
         _progress = new(value =>
         {
             ProgressDisplay.Value = value;
         });
-        
+
         _workingOn = new Progress<string>(value =>
         {
             StatusLabel.Content = value;
@@ -28,26 +29,27 @@ public partial class MainWindow : Window
 
     private async void Sync_Click(object sender, RoutedEventArgs e)
     {
-        if (BackupManager.Handler is null)
+        if (_selectedBackupConfig is null)
             return;
 
-        await TryAction("Syncing...", () => BackupManager.SyncBackup(_progress, _workingOn));
+
+        await TryAction("Syncing...", () => FileSyncer.AdvancedSync(_selectedBackupConfig, _progress, _workingOn));
     }
 
-    private async void Clean_Click(object sender, RoutedEventArgs e)
+    private void Clean_Click(object sender, RoutedEventArgs e)
     {
-        if (BackupManager.Handler is null)
+        if (_selectedBackupConfig is null)
             return;
 
-        await TryAction("Cleaning...", () => BackupManager.CleanBackup(_progress, _workingOn));
+        // await TryAction("Cleaning...", () => BackupManager.CleanBackup(_progress, _workingOn));
     }
 
-    private async void Verify_Click(object sender, RoutedEventArgs e)
+    private void Verify_Click(object sender, RoutedEventArgs e)
     {
-        if (BackupManager.Handler is null)
+        if (_selectedBackupConfig is null)
             return;
 
-        await TryAction("Verifying...", () => BackupManager.VerifyBackup(_progress));
+        // await TryAction("Verifying...", () => BackupManager.VerifyBackup(_progress));
     }
 
     private async Task TryAction(string label, Action action)
@@ -70,7 +72,7 @@ public partial class MainWindow : Window
 
     private void AddBackupLocation(object sender, RoutedEventArgs e)
     {
-        if (BackupManager.Handler is null)
+        if (_selectedBackupConfig is null)
         {
             return;
         }
@@ -79,20 +81,20 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() is true)
         {
             var result = dialog.FolderName;
-            BackupManager.Handler.Config.AddBackupLocation(result);
-            BackupManager.Handler.Config.Save();
+            _selectedBackupConfig.AddBackupLocation(result);
+            BackupConfigSerializer.Save(_selectedBackupConfig);
             BackupLocations.ItemsSource = null;
-            BackupLocations.ItemsSource = BackupManager.Handler.Config.BackupInfos;
+            BackupLocations.ItemsSource = _selectedBackupConfig.BackupInfos;
         }
     }
 
     private void BackupSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (BackupsView.SelectedItem is not BlacklistBackupConfig selected)
+        if (BackupsView.SelectedItem is not BackupConfig selected)
             return;
 
-        BackupManager.SetHandler(new(selected));
-        BackupLocations.ItemsSource = selected.BackupInfos;
+        _selectedBackupConfig = selected;
+        BackupLocations.ItemsSource = _selectedBackupConfig.BackupInfos;
     }
 
     private void AddBackupConfig(object sender, RoutedEventArgs e)
@@ -113,7 +115,7 @@ public partial class MainWindow : Window
         }
         var backupPath = dialog.FolderName;
 
-        App.AddBackupConfig(BlacklistBackupConfig.Create(originPath, backupPath));
+        App.AddBackupConfig(BackupConfig.Create(originPath, backupPath));
     }
 
     private void ResetProgress()

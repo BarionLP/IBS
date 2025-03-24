@@ -1,20 +1,20 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using Ametrin.Utils.WPF;
 
 namespace IBS;
 
 public partial class App : Application
 {
-    public static ObservableCollection<IBackupConfig> BackupConfigs { get; } = [];
+    public static ObservableCollection<BackupConfig> BackupConfigs { get; } = [];
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        IBSData.Init();
-        if (IBSData.DataFile.Exists)
+        AppFolders.Init();
+        if (AppFolders.DataFile.Exists)
         {
             _ = LoadConfigs();
         }
@@ -27,30 +27,33 @@ public partial class App : Application
             BackupConfigs.Clear();
         }
 
-        using var stream = IBSData.DataFile.OpenText();
+        using var stream = AppFolders.DataFile.OpenText();
 
         while (await stream.ReadLineAsync() is string backup)
         {
             var fileInfo = new FileInfo(backup);
             if (!fileInfo.Exists)
+            {
                 continue;
-            await BackupConfigExtensions.ReadAsync(fileInfo).Consume(BackupConfigs.Add, () => Trace.TraceWarning("Failed Reading {0}", fileInfo.FullName));
+            }
+
+            BackupConfigSerializer.Load(fileInfo).Consume(BackupConfigs.Add, () => MessageBoxHelper.ShowWaring("Failed Reading Backup Config:\n{0}", fileInfo.FullName));
         }
     }
 
 
     public static async Task SaveConfigs()
     {
-        using var stream = IBSData.DataFile.CreateText();
+        using var stream = AppFolders.DataFile.CreateText();
 
         foreach (var config in BackupConfigs)
         {
-            config.Save();
+            BackupConfigSerializer.Save(config);
             await stream.WriteLineAsync(config.ConfigFileInfo.FullName);
         }
     }
 
-    public static void AddBackupConfig(IBackupConfig config)
+    public static void AddBackupConfig(BackupConfig config)
     {
         BackupConfigs.Add(config);
         _ = SaveConfigs();

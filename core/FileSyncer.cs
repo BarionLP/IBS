@@ -17,7 +17,7 @@ public static class FileSyncer
         }
     }
 
-    public static void AdvancedSync(BackupConfig config)
+    public static void AdvancedSync(BackupConfig config, Progress<float> progress, Progress<string> workingOn)
     {
         Sync(config.OriginInfo);
 
