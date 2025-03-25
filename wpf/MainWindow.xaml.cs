@@ -30,32 +30,25 @@ public partial class MainWindow : Window
     private async void Sync_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedBackupConfig is null)
+        {
             return;
-
+        }
 
         await TryAction("Syncing...", () => FileSyncer.AdvancedSync(_selectedBackupConfig, _progress, _workingOn));
-    }
-
-    private void Clean_Click(object sender, RoutedEventArgs e)
-    {
-        if (_selectedBackupConfig is null)
-            return;
-
-        // await TryAction("Cleaning...", () => BackupManager.CleanBackup(_progress, _workingOn));
     }
 
     private void Verify_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedBackupConfig is null)
+        {
             return;
+        }
 
         // await TryAction("Verifying...", () => BackupManager.VerifyBackup(_progress));
     }
 
     private async Task TryAction(string label, Action action)
     {
-
-
         ResetProgress();
         StatusLabel.Content = label;
         try
@@ -91,7 +84,11 @@ public partial class MainWindow : Window
     private void BackupSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (BackupsView.SelectedItem is not BackupConfig selected)
+        {
+            _selectedBackupConfig = null;
+            BackupLocations.ItemsSource = null;
             return;
+        }
 
         _selectedBackupConfig = selected;
         BackupLocations.ItemsSource = _selectedBackupConfig.BackupInfos;

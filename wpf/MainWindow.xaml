@@ -5,40 +5,39 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IBS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Intelligent Backup System" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0" Orientation="Vertical">
-            <Button Content="New Location" Click="AddBackupConfig"/>
-            <ListView x:Name="BackupsView" SelectionMode="Single" SelectionChanged="BackupSelectionChanged">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Label Content="{Binding OriginInfo}"/>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <StackPanel Grid.Column="1" Orientation="Vertical">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 0"/>
-                <Button Grid.Column="1" Content="Clean" Click="Clean_Click" HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="4 0"/>
-            </Grid>
+        
+        <Button Grid.Row="0" Grid.Column="0" Content="Add Backup Config" Click="AddBackupConfig" Margin="4 0"/>
+        <ListView Grid.Row="1" Grid.Column="0" x:Name="BackupsView" SelectionMode="Single" SelectionChanged="BackupSelectionChanged">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Label Content="{Binding OriginInfo}"/>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2" CornerRadius="4" Margin="0 0 4 4" Background="{DynamicResource LayerFillColorDefaultBrush}"/>
+        
+        <Button Grid.Row="0" Grid.Column="1" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 4 2 0"/>
+        <Button Grid.Row="0" Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="2 4 8 0"/>
+        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Vertical">
             <StackPanel Orientation="Horizontal" Margin="4 8 0 0">
                 <Label>Status:</Label>
                 <Label x:Name = "StatusLabel">Idle</Label>
             </StackPanel>
-            <ProgressBar x:Name="ProgressDisplay"/>
+            <ProgressBar x:Name="ProgressDisplay" Margin="4 0 8 0"/>
             <ListView x:Name="BackupLocations">
                 <ListView.ContextMenu>
                     <ContextMenu>
@@ -47,5 +46,6 @@
                 </ListView.ContextMenu>
             </ListView>
         </StackPanel>
+
     </Grid>
 </Window>
