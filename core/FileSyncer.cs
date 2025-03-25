@@ -17,6 +17,7 @@ public static class FileSyncer
         }
     }
 
+    private const string DELETED_EXTENSION = ".deleted";
     public static void AdvancedSync(BackupConfig config, Progress<float> progress, Progress<string> workingOn)
     {
         Sync(config.OriginInfo);
@@ -30,7 +31,7 @@ public static class FileSyncer
             {
                 var dir = b.Directory(relativeOriginPath);
                 dir.CreateIfNotExists();
-                return (location: b, files: GetFiles(dir).Where(static f => f.Extension is not ".deleted").ToList());
+                return (location: b, files: GetFiles(dir).Where(static f => f.Extension is not DELETED_EXTENSION).ToList());
             }).ToArray();
 
             foreach (var file in files)
@@ -46,13 +47,10 @@ public static class FileSyncer
             foreach (var file in backupFiles.SelectMany(static s => s.files))
             {
                 Console.WriteLine($"marked {file.Name} deleted");
-                file.MoveTo($"{file.FullName}.deleted");
+                file.MoveTo($"{file.FullName}{DELETED_EXTENSION}");
             }
 
-            foreach (var sub in directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly))
-            {
-                Sync(sub);
-            }
+            directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Consume(Sync);
         }
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory) => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
