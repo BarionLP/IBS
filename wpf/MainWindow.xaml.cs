@@ -9,7 +9,7 @@ public partial class MainWindow : Window
 {
     private readonly Progress<float> _progress;
     private readonly Progress<string> _workingOn;
-    private BackupConfig _selectedBackupConfig;
+    private BackupConfig? _selectedBackupConfig = null;
     public MainWindow()
     {
         InitializeComponent();
