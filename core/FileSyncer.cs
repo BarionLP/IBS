@@ -27,7 +27,7 @@ public static class FileSyncer
             var relativeOriginPath = directory.GetRelativePath(config.OriginInfo);
             var files = GetFiles(directory);
 
-            var backupFiles = config.BackupInfos.Select(b =>
+            var backupFiles = config.BackupInfos.Where(static b => b.Exists).Select(b =>
             {
                 var dir = b.Directory(relativeOriginPath);
                 dir.CreateIfNotExists();
@@ -50,7 +50,22 @@ public static class FileSyncer
                 file.MoveTo($"{file.FullName}{DELETED_EXTENSION}");
             }
 
-            directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Consume(Sync);
+            var subDirectories = directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude).ToArray();
+            subDirectories.Consume(Sync);
+
+            foreach (var backup in backupFiles)
+            {
+                foreach (var deletedDirectory in backup.location.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(d => !subDirectories.Contains(d)))
+                {
+                    foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories))
+                    {
+                        Console.WriteLine($"marked {file.Name} deleted");
+                        file.MoveTo($"{file.FullName}{DELETED_EXTENSION}");
+                    }
+                }
+            }
+
+            
         }
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory) => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
@@ -62,6 +77,10 @@ public static class FileSyncer
 
         if (!to.Exists || !AreFilesInSync(from, to))
         {
+            if (to.Exists)
+            {
+                to.Delete();
+            }
             from.CopyTo(to, overwrite: true);
             Console.WriteLine($"Synced {from.Name}");
         }

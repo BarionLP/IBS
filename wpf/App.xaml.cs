@@ -37,7 +37,7 @@ public partial class App : Application
                 continue;
             }
 
-            BackupConfigSerializer.Load(fileInfo).Consume(BackupConfigs.Add, () => MessageBoxHelper.ShowWaring("Failed Reading Backup Config:\n{0}", fileInfo.FullName));
+            BackupConfigSerializer.Load(fileInfo).Consume(BackupConfigs.Add, () => MessageBoxHelper.ShowWaring($"Failed Reading Backup Config:\n{fileInfo.FullName}"));
         }
     }
 
