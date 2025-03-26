@@ -24,12 +24,12 @@ public static class FileSyncer
 
         void Sync(DirectoryInfo directory)
         {
-            var relativeOriginPath = directory.GetRelativePath(config.OriginInfo);
+            var relativeDirectory = directory.GetRelativePath(config.OriginInfo);
             var files = GetFiles(directory);
 
             var backupFiles = config.BackupInfos.Where(static b => b.Exists).Select(b =>
             {
-                var dir = b.Directory(relativeOriginPath);
+                var dir = b.Directory(relativeDirectory);
                 dir.CreateIfNotExists();
                 return (location: b, files: GetFiles(dir).Where(static f => f.Extension is not DELETED_EXTENSION).ToList());
             }).ToArray();
@@ -55,11 +55,11 @@ public static class FileSyncer
 
             foreach (var backup in backupFiles)
             {
-                foreach (var deletedDirectory in backup.location.Directory(relativeOriginPath).EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(d =>
-                {
-                    var relativePath = d.GetRelativePath(backup.location);
-                    return !subDirectories.Any(o => o.GetRelativePath(directory) == relativePath);
-                }))
+                var deletedDirectories = backup.location.Directory(relativeDirectory)
+                    .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
+                    .Where(d => !subDirectories.Any(o => o.GetRelativePath(directory) == d.GetRelativePath(backup.location)));
+
+                foreach (var deletedDirectory in deletedDirectories)
                 {
                     foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories))
                     {
@@ -68,8 +68,6 @@ public static class FileSyncer
                     }
                 }
             }
-
-            
         }
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory) => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
