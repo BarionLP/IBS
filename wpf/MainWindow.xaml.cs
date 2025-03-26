@@ -9,7 +9,7 @@ public partial class MainWindow : Window
 {
     private readonly Progress<float> _progress;
     private readonly Progress<string> _workingOn;
-    private BackupConfig? _selectedBackupConfig = null;
+    private BackupConfig? SelectedBackupConfig { get; set; }
     public MainWindow()
     {
         InitializeComponent();
@@ -29,17 +29,17 @@ public partial class MainWindow : Window
 
     private async void Sync_Click(object sender, RoutedEventArgs e)
     {
-        if (_selectedBackupConfig is null)
+        if (SelectedBackupConfig is null)
         {
             return;
         }
 
-        await TryAction("Syncing...", () => FileSyncer.AdvancedSync(_selectedBackupConfig, _progress, _workingOn));
+        await TryAction("Syncing...", () => FileSyncer.AdvancedSync(SelectedBackupConfig, _progress, _workingOn));
     }
 
     private void Verify_Click(object sender, RoutedEventArgs e)
     {
-        if (_selectedBackupConfig is null)
+        if (SelectedBackupConfig is null)
         {
             return;
         }
@@ -65,7 +65,7 @@ public partial class MainWindow : Window
 
     private void AddBackupLocation(object sender, RoutedEventArgs e)
     {
-        if (_selectedBackupConfig is null)
+        if (SelectedBackupConfig is null)
         {
             return;
         }
@@ -74,10 +74,10 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() is true)
         {
             var result = dialog.FolderName;
-            _selectedBackupConfig.AddBackupLocation(result);
-            BackupConfigSerializer.Save(_selectedBackupConfig);
+            SelectedBackupConfig.AddBackupLocation(result);
+            BackupConfigSerializer.Save(SelectedBackupConfig);
             BackupLocations.ItemsSource = null;
-            BackupLocations.ItemsSource = _selectedBackupConfig.BackupInfos;
+            BackupLocations.ItemsSource = SelectedBackupConfig.BackupInfos;
         }
     }
 
@@ -85,13 +85,13 @@ public partial class MainWindow : Window
     {
         if (BackupsView.SelectedItem is not BackupConfig selected)
         {
-            _selectedBackupConfig = null;
+            SelectedBackupConfig = null;
             BackupLocations.ItemsSource = null;
             return;
         }
 
-        _selectedBackupConfig = selected;
-        BackupLocations.ItemsSource = _selectedBackupConfig.BackupInfos;
+        SelectedBackupConfig = selected;
+        BackupLocations.ItemsSource = SelectedBackupConfig.BackupInfos;
     }
 
     private void AddBackupConfig(object sender, RoutedEventArgs e)

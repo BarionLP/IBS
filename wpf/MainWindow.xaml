@@ -4,8 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IBS"
+        xmlns:utils="clr-namespace:Ametrin.Utils.WPF;assembly=Ametrin.Utils.WPF"
         mc:Ignorable="d"
         Title="Intelligent Backup System" Height="450" Width="800">
+    <Window.Resources>
+        <utils:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -30,8 +35,8 @@
 
         <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2" CornerRadius="4" Margin="0 0 4 4" Background="{DynamicResource LayerFillColorDefaultBrush}"/>
         
-        <Button Grid.Row="0" Grid.Column="1" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 4 2 0"/>
-        <Button Grid.Row="0" Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="2 4 8 0"/>
+        <Button Grid.Row="0" Grid.Column="1" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 4 2 0" IsEnabled="{Binding SelectedBackupConfig, Converter={StaticResource NullToBooleanConverter}}"/>
+        <Button Grid.Row="0" Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="2 4 8 0" IsEnabled="{Binding SelectedBackupConfig, Converter={StaticResource NullToBooleanConverter}}"/>
         <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Vertical">
             <StackPanel Orientation="Horizontal" Margin="4 8 0 0">
                 <Label Margin="0 0 4 0">Status:</Label>
