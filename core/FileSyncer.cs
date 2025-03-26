@@ -55,7 +55,11 @@ public static class FileSyncer
 
             foreach (var backup in backupFiles)
             {
-                foreach (var deletedDirectory in backup.location.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(d => !subDirectories.Contains(d)))
+                foreach (var deletedDirectory in backup.location.Directory(relativeOriginPath).EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(d =>
+                {
+                    var relativePath = d.GetRelativePath(backup.location);
+                    return !subDirectories.Any(o => o.GetRelativePath(directory) == relativePath);
+                }))
                 {
                     foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories))
                     {
