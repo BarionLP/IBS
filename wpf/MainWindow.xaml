@@ -35,8 +35,8 @@
 
         <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2" CornerRadius="4" Margin="0 0 4 4" Background="{DynamicResource LayerFillColorDefaultBrush}"/>
         
-        <Button Grid.Row="0" Grid.Column="1" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 4 2 0" IsEnabled="{Binding SelectedBackupConfig, Converter={StaticResource NullToBooleanConverter}}"/>
-        <Button Grid.Row="0" Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="2 4 8 0" IsEnabled="{Binding SelectedBackupConfig, Converter={StaticResource NullToBooleanConverter}}"/>
+        <Button x:Name="SyncButton" Grid.Row="0" Grid.Column="1" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 4 2 0"/>
+        <Button x:Name="VerifyButton" Grid.Row="0" Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="2 4 8 0"/>
         <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Vertical">
             <StackPanel Orientation="Horizontal" Margin="4 8 0 0">
                 <Label Margin="0 0 4 0">Status:</Label>

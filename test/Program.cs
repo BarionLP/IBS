@@ -1,7 +1,20 @@
-using IBS.Core;
-using IBS.Core.Serialization;
+foreach(var file in Directory.EnumerateFiles("B:\\Backup\\Data\\_Storage", "*.deleted", SearchOption.AllDirectories))
+{
+    var f = file;
+    while (f.EndsWith(".deleted"))
+    {
+        f = f[..(^".deleted".Length)];
+    }
 
-// var config = BackupConfig.Create("Data/Origin", "Data/Backup");
-var config = BackupConfigSerializer.Load(new ("Data/Origin/backup_config.json")).OrThrow();
+    Console.WriteLine(f);
 
-FileSyncer.AdvancedSync(config, null, null);
+    if (File.Exists(f))
+    {
+        File.Delete(file);
+    }
+    else
+    {
+        File.Move(file, f);
+        Console.WriteLine(f);
+    }
+}

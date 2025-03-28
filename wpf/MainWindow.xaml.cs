@@ -9,12 +9,23 @@ public partial class MainWindow : Window
 {
     private readonly Progress<float> _progress;
     private readonly Progress<string> _workingOn;
-    private BackupConfig? SelectedBackupConfig { get; set; }
+    private BackupConfig? SelectedBackupConfig 
+    { 
+        get;
+        set
+        {
+            field = value;
+            SyncButton.IsEnabled = field is not null;
+            VerifyButton.IsEnabled = field is not null;
+        } 
+    }
     public MainWindow()
     {
         InitializeComponent();
+        DataContext = this;
         ResetProgress();
         BackupsView.ItemsSource = App.BackupConfigs;
+        SelectedBackupConfig = null;
 
         _progress = new(value =>
         {

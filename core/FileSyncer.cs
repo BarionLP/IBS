@@ -4,21 +4,8 @@ namespace IBS.Core;
 
 public static class FileSyncer
 {
-    public static void SimpleSync(BackupConfig config)
-    {
-        var files = config.OriginInfo.EnumerateFiles("*", SearchOption.AllDirectories).Where(config.ShouldInclude);
-        foreach (var file in files)
-        {
-            var relativePath = file.GetRelativePath(config.OriginInfo);
-            foreach (var backup in config.BackupInfos)
-            {
-                SyncFile(file, backup.File(relativePath));
-            }
-        }
-    }
-
     private const string DELETED_EXTENSION = ".deleted";
-    public static void AdvancedSync(BackupConfig config, Progress<float> progress, Progress<string> workingOn)
+    public static void AdvancedSync(BackupConfig config, IProgress<float> progress, IProgress<string> workingOn)
     {
         Sync(config.OriginInfo);
 
@@ -57,11 +44,11 @@ public static class FileSyncer
             {
                 var deletedDirectories = backup.location.Directory(relativeDirectory)
                     .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(d => !subDirectories.Any(o => o.GetRelativePath(directory) == d.GetRelativePath(backup.location)));
+                    .Where(d => !subDirectories.Any(o => o.GetRelativePath(config.OriginInfo) == d.GetRelativePath(backup.location)));
 
                 foreach (var deletedDirectory in deletedDirectories)
                 {
-                    foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories))
+                    foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories).Where(static f => f.Extension is not DELETED_EXTENSION))
                     {
                         Console.WriteLine($"marked {file.Name} deleted");
                         file.MoveTo($"{file.FullName}{DELETED_EXTENSION}");
@@ -71,20 +58,21 @@ public static class FileSyncer
         }
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory) => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
-    }
-
-    private static void SyncFile(FileInfo from, FileInfo to)
-    {
-        Debug.Assert(from.Exists);
-
-        if (!to.Exists || !AreFilesInSync(from, to))
+        
+        void SyncFile(FileInfo from, FileInfo to)
         {
-            if (to.Exists)
+            Debug.Assert(from.Exists);
+
+            if (!to.Exists || !AreFilesInSync(from, to))
             {
-                to.Delete();
+                workingOn.Report(from.FullName);
+                if (to.Exists)
+                {
+                    to.Delete();
+                }
+                from.CopyTo(to, overwrite: true);
+                Console.WriteLine($"Synced {from.Name}");
             }
-            from.CopyTo(to, overwrite: true);
-            Console.WriteLine($"Synced {from.Name}");
         }
     }
 
