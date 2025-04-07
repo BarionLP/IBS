@@ -1,5 +1,3 @@
-using System;
-
 namespace IBS.Core;
 
 public static class AppFolders

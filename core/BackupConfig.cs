@@ -7,7 +7,6 @@ public sealed class BackupConfig
     public DirectoryInfo OriginInfo { get; }
     public List<DirectoryInfo> BackupInfos { get; } = [];
     [JsonIgnore] public FileInfo ConfigFileInfo { get; }
-    //public FileInfo MetaDataFileInfo { get; }
 
     public List<string> IgnoredPaths { get; } = [];
     public List<string> IgnoredFileExtensions { get; } = [];
@@ -18,7 +17,6 @@ public sealed class BackupConfig
     private BackupConfig(DirectoryInfo originInfo)
     {
         OriginInfo = originInfo;
-        //MetaDataFileInfo = metaDataFileInfo;
         ConfigFileInfo = new(Path.Combine(OriginInfo.FullName, "backup_config.json"));
     }
 
@@ -47,6 +45,9 @@ public sealed class BackupConfig
 
         config.IgnoreFolders("System Volume Information", ".git");
         config.IgnoreExtensions(".blend1");
+        config.IgnoreExtensions(".deleted");
+        config.IgnoreExtensions(".old");
+        config.IgnoreExtensions(".tmp");
         config.IgnorePrefix("$");
 
         return config;
@@ -110,7 +111,7 @@ public sealed class BackupConfig
 
     public void AddBackupLocation(string path)
     {
-        var info = new DirectoryInfo(Path.Combine(path, "_Storage"));
+        var info = new DirectoryInfo(path);
         info.CreateIfNotExists();
         BackupInfos.Add(info);
     }

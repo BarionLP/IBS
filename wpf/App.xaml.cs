@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using Ametrin.Serialization;
 using Ametrin.Utils.WPF;
 
 namespace IBS;

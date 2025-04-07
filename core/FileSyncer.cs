@@ -1,63 +1,91 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
+using Ametrin.Serialization;
 
 namespace IBS.Core;
 
 public static class FileSyncer
 {
-    private const string DELETED_EXTENSION = ".deleted";
     public static void AdvancedSync(BackupConfig config, IProgress<float> progress, IProgress<string> workingOn)
     {
+        var backups = config.BackupInfos.Where(static b => b.Exists).Select(Backup.Create).ToImmutableArray();
         Sync(config.OriginInfo);
+
+        var now = DateTime.Now;
+        foreach (var backup in backups)
+        {
+            foreach (var (deleted, timestamp) in backup.DeletedTimeStamps)
+            {
+                // if (File.Exists(deleted) && (now - timestamp).TotalDays > 60)
+                // {
+                //     File.Delete(deleted);
+                //     backup.DeletedTimeStamps.Remove(deleted);
+                // } else
+                if(!File.Exists(deleted))
+                {
+                    backup.DeletedTimeStamps.Remove(deleted);
+                }
+            }
+
+            JsonExtensions.WriteToJsonFile(backup.DeletedTimeStamps, backup.DeletedMetaData);
+        }
 
         void Sync(DirectoryInfo directory)
         {
             var relativeDirectory = directory.GetRelativePath(config.OriginInfo);
             var files = GetFiles(directory);
 
-            var backupFiles = config.BackupInfos.Where(static b => b.Exists).Select(b =>
+            // read all files in the backup
+            var backupInfos = backups.Select(backup =>
             {
-                var dir = b.Directory(relativeDirectory);
+                var dir = backup.Storage.Directory(relativeDirectory);
                 dir.CreateIfNotExists();
-                return (location: b, files: GetFiles(dir).Where(static f => f.Extension is not DELETED_EXTENSION).ToList());
+                return (backup, files: GetFiles(dir).Where(f => !backup.IsSoftDeleted(f)).ToList());
             }).ToArray();
 
+            // sync
             foreach (var file in files)
             {
                 var relativeFilePath = file.GetRelativePath(config.OriginInfo);
-                foreach (var backup in backupFiles)
+                foreach (var info in backupInfos)
                 {
-                    SyncFile(file, backup.location.File(relativeFilePath));
-                    backup.files.RemoveAll(f => f.GetRelativePath(backup.location) == relativeFilePath);
+                    SyncFile(file, info.backup.Storage.File(relativeFilePath));
+                    info.files.RemoveAll(f => f.GetRelativePath(info.backup.Storage) == relativeFilePath);
                 }
             }
 
-            foreach (var file in backupFiles.SelectMany(static s => s.files))
+            // mark remaining files as deleted
+            foreach (var info in backupInfos)
             {
-                Console.WriteLine($"marked {file.Name} deleted");
-                file.MoveTo($"{file.FullName}{DELETED_EXTENSION}");
+                foreach (var file in info.files)
+                {
+                    info.backup.SoftDelete(file);
+                }
             }
 
+            // sync subdirectories
             var subDirectories = directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude).ToArray();
             subDirectories.Consume(Sync);
 
-            foreach (var backup in backupFiles)
+            // mark remaining directories as deleted
+            foreach (var info in backupInfos)
             {
-                var deletedDirectories = backup.location.Directory(relativeDirectory)
+                var deletedDirectories = info.backup.Storage.Directory(relativeDirectory)
                     .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(d => !subDirectories.Any(o => o.GetRelativePath(config.OriginInfo) == d.GetRelativePath(backup.location)));
+                    .Where(backupDir => !subDirectories.Any(originDir => originDir.GetRelativePath(config.OriginInfo) == backupDir.GetRelativePath(info.backup.Storage)));
 
                 foreach (var deletedDirectory in deletedDirectories)
                 {
-                    foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories).Where(static f => f.Extension is not DELETED_EXTENSION))
+                    foreach (var file in deletedDirectory.EnumerateFiles("*", SearchOption.AllDirectories).Where(f => !info.backup.IsSoftDeleted(f)))
                     {
-                        Console.WriteLine($"marked {file.Name} deleted");
-                        file.MoveTo($"{file.FullName}{DELETED_EXTENSION}");
+                        info.backup.SoftDelete(file);
                     }
                 }
             }
         }
 
-        IEnumerable<FileInfo> GetFiles(DirectoryInfo directory) => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
+        IEnumerable<FileInfo> GetFiles(DirectoryInfo directory)
+            => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
         
         void SyncFile(FileInfo from, FileInfo to)
         {
