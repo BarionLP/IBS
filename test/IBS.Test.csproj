@@ -8,17 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="TUnit" Version="0.18.52" /> -->
+    <PackageReference Include="TUnit" Version="0.21.16" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\core\IBS.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Data\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>
