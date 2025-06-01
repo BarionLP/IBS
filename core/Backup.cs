@@ -16,10 +16,9 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo d
     {
         if (!BelongsHere(file)) throw new ArgumentException("Cannot delete files outside of the current backup", nameof(file));
 
-        Console.WriteLine($"marked {file.Name} deleted");
         var newPath = $"{file.FullName}{DELETED_EXTENSION}";
         file.MoveTo(newPath);
-        DeletedTimeStamps.Add(newPath, DateTime.Now);
+        DeletedTimeStamps[newPath] = DateTime.Now;
     }
 
     public bool IsSoftDeleted(FileInfo file)

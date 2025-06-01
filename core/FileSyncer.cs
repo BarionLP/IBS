@@ -16,11 +16,6 @@ public static class FileSyncer
         {
             foreach (var (deleted, timestamp) in backup.DeletedTimeStamps)
             {
-                // if (File.Exists(deleted) && (now - timestamp).TotalDays > 60)
-                // {
-                //     File.Delete(deleted);
-                //     backup.DeletedTimeStamps.Remove(deleted);
-                // } else
                 if(!File.Exists(deleted))
                 {
                     backup.DeletedTimeStamps.Remove(deleted);
