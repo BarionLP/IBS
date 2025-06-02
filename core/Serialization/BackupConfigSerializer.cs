@@ -7,15 +7,15 @@ public static class BackupConfigSerializer
     public static void Save(BackupConfig config) => config.WriteToJsonFile(config.ConfigFileInfo);
     public static Result<BackupConfig> Load(FileInfo fileInfo)
     {
-        var config = JsonExtensions.ReadFromJsonFile<BackupConfig>(fileInfo);
+        var config = JsonExtensions.ReadFromJsonFile(fileInfo, BackupJsonContext.Default.BackupConfig);
 
         config.Consume(static config =>
         {
-            foreach (var i in ..config.BackupInfos.Count)
+            foreach (var i in ..config.BackupDirectories.Count)
             {
-                if (config.BackupInfos[i].Name is "_Storage")
+                if (config.BackupDirectories[i].Name is "_Storage")
                 {
-                    config.BackupInfos[i] = config.BackupInfos[i].Parent;
+                    config.BackupDirectories[i] = config.BackupDirectories[i].Parent;
                 }
             }
         });

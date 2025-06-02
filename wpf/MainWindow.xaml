@@ -28,7 +28,7 @@
         <ListView Grid.Row="1" Grid.Column="0" x:Name="BackupsView" SelectionMode="Single" SelectionChanged="BackupSelectionChanged">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Label Content="{Binding OriginInfo}"/>
+                    <Label Content="{Binding OriginDirectory}"/>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

@@ -88,7 +88,7 @@ public partial class MainWindow : Window
             SelectedBackupConfig.AddBackupLocation(result);
             BackupConfigSerializer.Save(SelectedBackupConfig);
             BackupLocations.ItemsSource = null;
-            BackupLocations.ItemsSource = SelectedBackupConfig.BackupInfos;
+            BackupLocations.ItemsSource = SelectedBackupConfig.BackupDirectories;
         }
     }
 
@@ -102,7 +102,7 @@ public partial class MainWindow : Window
         }
 
         SelectedBackupConfig = selected;
-        BackupLocations.ItemsSource = SelectedBackupConfig.BackupInfos;
+        BackupLocations.ItemsSource = SelectedBackupConfig.BackupDirectories;
     }
 
     private void AddBackupConfig(object sender, RoutedEventArgs e)

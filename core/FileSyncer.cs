@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
-using Ametrin.Serialization;
 
 namespace IBS.Core;
 
@@ -8,26 +7,26 @@ public static class FileSyncer
 {
     public static void AdvancedSync(BackupConfig config, IProgress<float> progress, IProgress<string> workingOn)
     {
-        var backups = config.BackupInfos.Where(static b => b.Exists).Select(Backup.Create).ToImmutableArray();
-        Sync(config.OriginInfo);
+        var backups = config.BackupDirectories.Where(static b => b.Exists).Select(Backup.Create).ToImmutableArray();
+        Sync(config.OriginDirectory);
 
         var now = DateTime.Now;
         foreach (var backup in backups)
         {
             foreach (var (deleted, timestamp) in backup.DeletedTimeStamps)
             {
-                if(!File.Exists(deleted))
+                if (!File.Exists(deleted))
                 {
                     backup.DeletedTimeStamps.Remove(deleted);
                 }
             }
-
-            JsonExtensions.WriteToJsonFile(backup.DeletedTimeStamps, backup.DeletedMetaData);
+            backup.MetaData.LastWriteTime = DateTime.Now;
+            backup.Save();
         }
 
         void Sync(DirectoryInfo directory)
         {
-            var relativeDirectory = directory.GetRelativePath(config.OriginInfo);
+            var relativeDirectory = directory.GetRelativePath(config.OriginDirectory);
             var files = GetFiles(directory);
 
             // read all files in the backup
@@ -41,7 +40,7 @@ public static class FileSyncer
             // sync
             foreach (var file in files)
             {
-                var relativeFilePath = file.GetRelativePath(config.OriginInfo);
+                var relativeFilePath = file.GetRelativePath(config.OriginDirectory);
                 foreach (var info in backupInfos)
                 {
                     SyncFile(file, info.backup.Storage.File(relativeFilePath));
@@ -67,7 +66,7 @@ public static class FileSyncer
             {
                 var deletedDirectories = info.backup.Storage.Directory(relativeDirectory)
                     .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(backupDir => !subDirectories.Any(originDir => originDir.GetRelativePath(config.OriginInfo) == backupDir.GetRelativePath(info.backup.Storage)));
+                    .Where(backupDir => !subDirectories.Any(originDir => originDir.GetRelativePath(config.OriginDirectory) == backupDir.GetRelativePath(info.backup.Storage)));
 
                 foreach (var deletedDirectory in deletedDirectories)
                 {
@@ -81,7 +80,7 @@ public static class FileSyncer
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory)
             => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
-        
+
         void SyncFile(FileInfo from, FileInfo to)
         {
             Debug.Assert(from.Exists);

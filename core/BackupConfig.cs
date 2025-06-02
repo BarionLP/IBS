@@ -4,8 +4,8 @@ namespace IBS.Core;
 
 public sealed class BackupConfig
 {
-    public DirectoryInfo OriginInfo { get; }
-    public List<DirectoryInfo> BackupInfos { get; } = [];
+    public DirectoryInfo OriginDirectory { get; }
+    public List<DirectoryInfo> BackupDirectories { get; } = [];
     [JsonIgnore] public FileInfo ConfigFileInfo { get; }
 
     public List<string> IgnoredPaths { get; } = [];
@@ -14,17 +14,21 @@ public sealed class BackupConfig
     public List<string> IgnoredFolderNames { get; } = [];
     public List<string> IgnoredFileNames { get; } = [];
 
-    private BackupConfig(DirectoryInfo originInfo)
+    // backwards compat (when removing, also remove constructor arguments)
+    public DirectoryInfo OriginInfo { set { } }
+    public List<DirectoryInfo> BackupInfos { set { } }
+
+    private BackupConfig(DirectoryInfo originDirectory)
     {
-        OriginInfo = originInfo;
-        ConfigFileInfo = new(Path.Combine(OriginInfo.FullName, "backup_config.json"));
+        OriginDirectory = originDirectory;
+        ConfigFileInfo = OriginDirectory.File("backup_config.json");
     }
 
     [JsonConstructor]
-    public BackupConfig(DirectoryInfo originInfo, List<DirectoryInfo> backupInfos, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames) :
-        this(originInfo)
+    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames, List<DirectoryInfo> backupInfos, DirectoryInfo originInfo = null) :
+        this(originDirectory ?? originInfo ?? throw new ArgumentNullException(nameof(originDirectory)))
     {
-        BackupInfos = backupInfos;
+        BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories ?? backupInfos);
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
         IgnoredPrefixes = ignoredPrefixes;
@@ -44,10 +48,8 @@ public sealed class BackupConfig
         }
 
         config.IgnoreFolders("System Volume Information", ".git");
-        config.IgnoreExtensions(".blend1");
-        config.IgnoreExtensions(".deleted");
-        config.IgnoreExtensions(".old");
-        config.IgnoreExtensions(".tmp");
+        config.IgnoreExtensions(".blend1", ".deleted", ".old", ".tmp");
+        config.IgnoreFiles("desktop.ini");
         config.IgnorePrefix("$");
 
         return config;
@@ -113,6 +115,6 @@ public sealed class BackupConfig
     {
         var info = new DirectoryInfo(path);
         info.CreateIfNotExists();
-        BackupInfos.Add(info);
+        BackupDirectories.Add(info);
     }
 }
