@@ -12,7 +12,7 @@ if (!origin.Exists)
     return;
 }
 
-ResetGit(origin);
+AskToResetGit(origin.Parent!);
 
 var config = BackupConfigSerializer.Load(origin.File("backup_config.json")).OrThrow();
 
@@ -34,6 +34,7 @@ AssertExists(backups[1].Storage.File("deleted_dir/file_in_deleted_dir.md"));
 
 FileSyncer.AdvancedSync(config);
 
+// refresh the backup states
 backups = config.BackupDirectories.Select(Backup.Create).ToImmutableArray();
 
 AssertFileBackedUp(origin.File("tosync.txt"));
@@ -46,6 +47,8 @@ AssertAboutNow(backups[0].MetaData.LastWriteTime, $"{backups[0].Root} says it wa
 AssertAboutNow(backups[1].MetaData.LastWriteTime, $"{backups[1].Root} says it was not synced");
 
 Console.WriteLine("✅: no further errors found");
+
+ResetGit(origin.Parent!);
 
 static bool AssertExists(FileSystemInfo fileInfo)
 {
@@ -110,13 +113,13 @@ static void AssertAboutNow(DateTime dateTime, string message, TimeSpan? toleranc
     }
 }
 
-static void ResetGit(DirectoryInfo origin)
+static void AskToResetGit(DirectoryInfo root)
 {
     var psi = new ProcessStartInfo
     {
         FileName = "git",
         Arguments = "status --porcelain",
-        WorkingDirectory = origin.Parent!.FullName,
+        WorkingDirectory = root.FullName,
         RedirectStandardOutput = true,
         UseShellExecute = false,
         CreateNoWindow = true
@@ -133,20 +136,25 @@ static void ResetGit(DirectoryInfo origin)
         Console.WriteLine();
         if (response.Key is ConsoleKey.Y)
         {
-            // Discard all changes including untracked files
-            var resetPsi = new ProcessStartInfo
-            {
-                FileName = "cmd",
-                Arguments = "/C git reset --hard && git clean -fd",
-                WorkingDirectory = origin.Parent!.FullName,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var resetProcess = Process.Start(resetPsi)!;
-            resetProcess.WaitForExit();
+            ResetGit(root);
             Console.WriteLine("All changes have been discarded.");
         }
     }
+}
+
+static void ResetGit(DirectoryInfo root)
+{
+    // Discard all changes including untracked files
+    var resetPsi = new ProcessStartInfo
+    {
+        FileName = "cmd",
+        Arguments = "/C git reset --hard && git clean -fd",
+        WorkingDirectory = root.FullName,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+    using var resetProcess = Process.Start(resetPsi)!;
+    resetProcess.WaitForExit();
 }
