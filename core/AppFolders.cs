@@ -1,10 +1,10 @@
-﻿namespace IBS.Core;
+namespace IBS.Core;
 
-public static class IBSData
+public static class AppFolders
 {
     public static readonly DirectoryInfo DataDirectory = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "IBS"));
     public static readonly DirectoryInfo LogsDirectory = new(Path.Combine(DataDirectory.FullName, "Logs"));
-    public static readonly FileInfo DataFile = new(Path.Combine(DataDirectory.FullName, "Backups.txt"));
+    public static readonly FileInfo DataFile = new(Path.Combine(DataDirectory.FullName, "backups.txt"));
 
     public static void Init()
     {

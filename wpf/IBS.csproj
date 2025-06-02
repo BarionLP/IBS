@@ -3,15 +3,17 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
+	  <LangVersion>preview</LangVersion>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
 	  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 	  <PublishSingleFile>true</PublishSingleFile>
+	  <SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Packages\Ametrin.Utils.WPF\Ametrin.Utils.WPF.csproj" />
-    <ProjectReference Include="..\IBS.Core\IBS.Core.csproj" />
+    <ProjectReference Include="..\core\IBS.Core.csproj" />
   </ItemGroup>
 
 </Project>
