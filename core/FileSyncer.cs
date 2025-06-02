@@ -5,7 +5,7 @@ namespace IBS.Core;
 
 public static class FileSyncer
 {
-    public static void AdvancedSync(BackupConfig config, IProgress<float> progress, IProgress<string> workingOn)
+    public static void AdvancedSync(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null)
     {
         var backups = config.BackupDirectories.Where(static b => b.Exists).Select(Backup.Create).ToImmutableArray();
         Sync(config.OriginDirectory);
@@ -87,13 +87,12 @@ public static class FileSyncer
 
             if (!to.Exists || !AreFilesInSync(from, to))
             {
-                workingOn.Report(from.FullName);
+                workingOn?.Report(from.FullName);
                 if (to.Exists)
                 {
                     to.Delete();
                 }
                 from.CopyTo(to, overwrite: true);
-                Console.WriteLine($"Synced {from.Name}");
             }
         }
     }

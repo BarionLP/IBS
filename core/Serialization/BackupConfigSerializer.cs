@@ -15,7 +15,7 @@ public static class BackupConfigSerializer
             {
                 if (config.BackupDirectories[i].Name is "_Storage")
                 {
-                    config.BackupDirectories[i] = config.BackupDirectories[i].Parent;
+                    config.BackupDirectories[i] = config.BackupDirectories[i].Parent!;
                 }
             }
         });

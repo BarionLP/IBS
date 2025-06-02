@@ -25,7 +25,7 @@ public sealed class BackupConfig
     }
 
     [JsonConstructor]
-    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames, List<DirectoryInfo> backupInfos, DirectoryInfo originInfo = null) :
+    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames, List<DirectoryInfo>? backupInfos = null, DirectoryInfo? originInfo = null) :
         this(originDirectory ?? originInfo ?? throw new ArgumentNullException(nameof(originDirectory)))
     {
         BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories ?? backupInfos);
