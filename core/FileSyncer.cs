@@ -44,7 +44,7 @@ public static class FileSyncer
                 foreach (var info in backupInfos)
                 {
                     SyncFile(file, info.backup.Storage.File(relativeFilePath));
-                    info.files.RemoveAll(f => f.GetRelativePath(info.backup.Storage) == relativeFilePath);
+                    info.files.RemoveAll(f => string.Equals(f.GetRelativePath(info.backup.Storage), relativeFilePath, StringComparison.OrdinalIgnoreCase));
                 }
             }
 
@@ -66,7 +66,7 @@ public static class FileSyncer
             {
                 var deletedDirectories = info.backup.Storage.Directory(relativeDirectory)
                     .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(backupDir => !subDirectories.Any(originDir => originDir.GetRelativePath(config.OriginDirectory) == backupDir.GetRelativePath(info.backup.Storage)));
+                    .Where(backupDir => !subDirectories.Any(originDir =>  string.Equals(originDir.GetRelativePath(config.OriginDirectory), backupDir.GetRelativePath(info.backup.Storage), StringComparison.OrdinalIgnoreCase)));
 
                 foreach (var deletedDirectory in deletedDirectories)
                 {

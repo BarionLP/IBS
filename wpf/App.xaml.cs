@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
-using Ametrin.Serialization;
 using Ametrin.Utils.WPF;
 
 namespace IBS;
@@ -21,13 +20,8 @@ public partial class App : Application
         }
     }
 
-    public static async Task LoadConfigs(bool clearOld = true)
+    public static async Task LoadConfigs()
     {
-        if (clearOld)
-        {
-            BackupConfigs.Clear();
-        }
-
         using var stream = AppFolders.DataFile.OpenText();
 
         while (await stream.ReadLineAsync() is string backup)
@@ -41,7 +35,6 @@ public partial class App : Application
             BackupConfigSerializer.Load(fileInfo).Consume(BackupConfigs.Add, e => MessageBoxHelper.ShowWaring($"Failed Reading Backup Config\n{fileInfo.FullName}\n{e.Message}"));
         }
     }
-
 
     public static async Task SaveConfigs()
     {
