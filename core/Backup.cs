@@ -35,7 +35,7 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
         return file.Extension is DELETED_EXTENSION;
     }
 
-    public bool BelongsHere(FileInfo file) => file.FullName.StartsWith(Storage.FullName);
+    public bool BelongsHere(FileInfo file) => file.FullName.StartsWith(Storage.FullName, StringComparison.OrdinalIgnoreCase);
 
     public void Save()
     {
@@ -50,7 +50,7 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
         var deletedTimestampsFile = root.File("deleted.json");
 
         var metaData = metaDataFile.Exists ? JsonExtensions.ReadFromJsonFile(metaDataFile, BackupJsonContext.Default.BackupMetaData).OrThrow() : new();
-        var deletedTimestamps = deletedTimestampsFile.Exists ? JsonExtensions.ReadFromJsonFile(deletedTimestampsFile, BackupJsonContext.Default.DictionaryStringDateTime).OrThrow() : [];
+        var deletedTimestamps = deletedTimestampsFile.Exists ? JsonExtensions.ReadFromJsonFile(deletedTimestampsFile, BackupJsonContext.Default.DictionaryStringDateTime).OrThrow().ToDictionary(StringComparer.OrdinalIgnoreCase) : new(StringComparer.OrdinalIgnoreCase);
 
         return new Backup(root, storage, metaDataFile, deletedTimestampsFile, metaData, deletedTimestamps);
     }
