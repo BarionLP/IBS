@@ -47,7 +47,7 @@ public sealed class BackupConfig
             config.ConfigFileInfo.Create().Dispose();
         }
 
-        config.IgnoreFolders("System Volume Information", ".git");
+        config.IgnoreFolders("System Volume Information", ".Trash-1000", ".git");
         config.IgnoreExtensions(".blend1", ".deleted", ".old", ".tmp");
         config.IgnoreFiles("desktop.ini");
         config.IgnorePrefix("$");
