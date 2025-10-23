@@ -12,7 +12,7 @@ if (!origin.Exists)
     return;
 }
 
-AskToResetGit(origin.Parent!);
+// AskToResetGit(origin.Parent!);
 
 var config = BackupConfigSerializer.Load(origin.File("backup_config.json")).OrThrow();
 
@@ -22,6 +22,8 @@ foreach (var backupDir in config.BackupDirectories)
     Console.WriteLine($"❌: Backup {backupDir} not found");
     return;
 }
+
+await FileSyncer.SyncV2(config);
 
 var backups = config.BackupDirectories.Select(Backup.Create).ToImmutableArray();
 
