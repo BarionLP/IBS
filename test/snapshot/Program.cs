@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using System.Buffers.Text;
 using System.Diagnostics;
 using Ametrin.Optional;
 using Ametrin.Utils;
@@ -12,7 +12,7 @@ if (!origin.Exists)
     return;
 }
 
-// AskToResetGit(origin.Parent!);
+AskToResetGit(origin.Parent!);
 
 var config = BackupConfigSerializer.Load(origin.File("backup_config.json")).OrThrow();
 
@@ -23,21 +23,20 @@ foreach (var backupDir in config.BackupDirectories)
     return;
 }
 
-await FileSyncer.SyncV2(config);
 
-var backups = config.BackupDirectories.Select(Backup.Create).ToImmutableArray();
+var backups = await Task.WhenAll(config.BackupDirectories.Select(BackupV2.CreateAsync));
 
 AssertExistsWithContent(origin.File("tosync.txt"), "this file has been changed");
 AssertExistsWithContent(origin.File("synced.txt"), "this file is in sync");
 AssertExistsWithContent(origin.File("sub_folder/sub_file.md"), "yayay");
-AssertExists(backups[0].Storage.File("deleted.txt"));
-AssertExists(backups[0].Storage.File("synced.txt"));
-AssertExists(backups[1].Storage.File("deleted_dir/file_in_deleted_dir.md"));
+AssertExistsInBackup(backups[0], "deleted.txt");
+AssertExistsInBackup(backups[0], "synced.txt");
+AssertExistsInBackup(backups[1], "deleted_dir/file_in_deleted_dir.md");
 
-FileSyncer.AdvancedSync(config);
+await FileSyncer.SyncV2(config);
 
 // refresh the backup states
-backups = config.BackupDirectories.Select(Backup.Create).ToImmutableArray();
+backups = await Task.WhenAll(config.BackupDirectories.Select(BackupV2.CreateAsync));
 
 AssertFileBackedUp(origin.File("tosync.txt"));
 AssertFileBackedUp(origin.File("synced.txt"));
@@ -59,6 +58,30 @@ static bool AssertExists(FileSystemInfo fileInfo)
     return false;
 }
 
+static bool AssertExistsInBackup(BackupV2 backup, string path, bool deleted = false)
+{
+    if (backup.GetFile(path).Branch(out var node))
+    {
+        if (!deleted && node.Info.DeletedAt is not null)
+        {
+            Console.WriteLine($"❌: {path} is marked as deleted");
+            return false;
+        }
+        
+        if (node.GetFileInfo().Exists)
+        {
+            return true;
+        }
+
+        Console.WriteLine($"❌: {path} has not been copied");
+    }
+    else
+    {
+        Console.WriteLine($"❌: {path} does not exists");
+    }
+    return false;
+}
+
 static bool AssertNotExists(FileSystemInfo fileInfo)
 {
     if (!fileInfo.Exists) return true;
@@ -70,29 +93,31 @@ void AssertFileBackedUp(FileInfo fileInfo)
 {
     if (!AssertExists(fileInfo)) return;
 
-    var content = File.ReadAllBytes(fileInfo.FullName);
+    var hash = fileInfo.ComputeSHA256Hash();
     var relativePath = fileInfo.GetRelativePath(origin);
     foreach (var backup in backups)
     {
-        var backupFile = backup.Storage.File(relativePath);
-        if (!AssertExists(fileInfo)) continue;
-        var backupContent = File.ReadAllBytes(backupFile.FullName);
-        if (content.SequenceEqual(backupContent)) continue;
+        if (!AssertExistsInBackup(backup, relativePath)) continue;
+        var node = backup.GetFile(relativePath).OrThrow();
+        if (hash.SequenceEqual(Base64Url.DecodeFromChars(node.Info.GetLatest()!.Hash))) continue;
         Console.WriteLine($"❌: {relativePath} is not correctly backed up to {backup.Root}");
     }
 }
 
-static void AssertSoftDeleted(Backup backup, string relativePath)
+static void AssertSoftDeleted(BackupV2 backup, string relativePath)
 {
-    AssertNotExists(backup.Storage.File(relativePath));
-    var deletedFile = backup.Storage.File($"{relativePath}.deleted");
-    AssertExists(deletedFile);
-    if (!backup.DeletedTimeStamps.TryGetValue(deletedFile.FullName, out DateTime timeDeleted))
+    if (backup.GetFile(relativePath).Branch(out var node))
     {
-        Console.WriteLine($"❌: {relativePath} was not marked as deleted");
-        return;
+        if (node.Info.DeletedAt is DateTime deletedAt)
+        {
+            AssertAboutNow(deletedAt, $"{relativePath} was marked as deleted to long ago");
+        }
+        else
+        {
+            Console.WriteLine($"❌: {relativePath} was not marked as deleted");
+        }
+        AssertExistsInBackup(backup, relativePath, deleted: true);
     }
-    AssertAboutNow(timeDeleted, $"{relativePath} was marked as deleted to long ago");
 }
 
 static void AssertExistsWithContent(FileInfo fileInfo, string expectedContent)

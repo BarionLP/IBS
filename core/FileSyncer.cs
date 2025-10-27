@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.Json.Nodes;
 
 namespace IBS.Core;
 
@@ -11,7 +10,11 @@ public static class FileSyncer
 
         await SyncImplAsync(config.OriginDirectory);
 
-        await Task.WhenAll(backups.Select(b => b.SaveAsync(token)));
+        await Task.WhenAll(backups.Select(b =>
+        {
+            b.MetaData.LastWriteTime = DateTime.Now;
+            return b.SaveAsync(token);
+        }));
 
         return default;
 
@@ -37,7 +40,7 @@ public static class FileSyncer
             {
                 foreach (var file in backup.GetFiles(dirPath))
                 {
-                    if (existingNodes.Contains(file.Name)) continue;
+                    if (existingNodes.Contains(file.Name) || file.Info.DeletedAt is not null) continue;
                     file.SoftDelete();
                 }
             }
@@ -45,7 +48,7 @@ public static class FileSyncer
             // sync subdirectories
             existingNodes.Clear();
             var subDirectories = directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude).ToArray();
-            
+
             foreach (var sub in subDirectories)
             {
                 existingNodes.Add(sub.Name);
@@ -58,10 +61,10 @@ public static class FileSyncer
                 foreach (var (name, node) in backup.GetDirectories(dirPath))
                 {
                     if (existingNodes.Contains(name)) continue;
-                    SoftDeleteNodes(backup, Path.Join(dirPath, name));
+                    SoftDeleteNodes(backup, dirPath is "." ? name : Path.Join(dirPath, name));
                 }
             }
-            
+
             static void SoftDeleteNodes(BackupV2 backup, string dirPath)
             {
                 foreach (var file in backup.GetFiles(dirPath))
@@ -142,7 +145,7 @@ public static class FileSyncer
             {
                 var deletedDirectories = info.backup.Storage.Directory(relativeDirectory)
                     .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(backupDir => !subDirectories.Any(originDir =>  string.Equals(originDir.GetRelativePath(config.OriginDirectory), backupDir.GetRelativePath(info.backup.Storage), StringComparison.OrdinalIgnoreCase)));
+                    .Where(backupDir => !subDirectories.Any(originDir => string.Equals(originDir.GetRelativePath(config.OriginDirectory), backupDir.GetRelativePath(info.backup.Storage), StringComparison.OrdinalIgnoreCase)));
 
                 foreach (var deletedDirectory in deletedDirectories)
                 {
@@ -164,10 +167,6 @@ public static class FileSyncer
             if (!to.Exists || !AreFilesInSync(from, to))
             {
                 workingOn?.Report(from.FullName);
-                if (to.Exists)
-                {
-                    to.Delete();
-                }
                 from.CopyTo(to, overwrite: true);
             }
         }
@@ -196,19 +195,15 @@ public static class FileOperations
 
             await source.CopyToAsync(destination, token);
         }
-        
-        public static async Task CopyAsync(FileInfo sourceFileInfo, FileInfo destFileInfo, bool overwrite = false, CancellationToken token = default)
+
+        public static Task CopyAsync(FileInfo sourceFileInfo, FileInfo destFileInfo, bool overwrite = false, CancellationToken token = default)
         {
             if (destFileInfo.Exists && !overwrite)
             {
                 throw new IOException();
             }
 
-            using var source = sourceFileInfo.OpenRead();
-            destFileInfo.Directory?.Create();
-            using var destination = destFileInfo.Create();
-
-            await source.CopyToAsync(destination, token);
+            return Task.Run(() => sourceFileInfo.CopyTo(destFileInfo), token);
         }
     }
 
