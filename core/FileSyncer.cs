@@ -4,9 +4,18 @@ namespace IBS.Core;
 
 public static class FileSyncer
 {
+
+    public static Task<ErrorState> Sync(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null, CancellationToken token = default)
+    {
+        AdvancedSync(config, progress, workingOn);
+        return SyncV2(config, progress, workingOn, token);
+    }
+    
     public static async Task<ErrorState> SyncV2(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null, CancellationToken token = default)
     {
-        var backups = await Task.WhenAll(config.BackupDirectories.Where(static b => b.Exists).Select(BackupV2.CreateAsync));
+        var backups = (await Task.WhenAll(config.BackupDirectories.Where(static b => b.Exists).Select(BackupV2.CreateAsync))).Where(static b => b.MetaData.Version is 2).ToArray();
+
+        if (backups.Length is 0) return default;
 
         await SyncImplAsync(config.OriginDirectory);
 
@@ -86,7 +95,10 @@ public static class FileSyncer
 
     public static void AdvancedSync(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null)
     {
-        var backups = config.BackupDirectories.Where(static b => b.Exists).Select(Backup.Create).ToImmutableArray();
+        var backups = config.BackupDirectories.Where(static b => b.Exists).Select(Backup.Create).Where(static b => b.MetaData.Version is 1).ToImmutableArray();
+        
+        if (backups.Length is 0) return;
+
         Sync(config.OriginDirectory);
 
         var now = DateTime.Now;

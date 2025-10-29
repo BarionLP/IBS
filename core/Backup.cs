@@ -40,8 +40,8 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
 
     public void Save()
     {
-        JsonSerializer.SerializeToFile(MetaDataFile, MetaData, BackupJsonContext.Default.BackupMetaData);
-        JsonSerializer.SerializeToFile(DeletedTimeStampsFile, DeletedTimeStamps, BackupJsonContext.Default.DictionaryStringDateTime);
+        JsonSerializer.SerializeToFile(MetaDataFile, MetaData, BackupJsonContext.Default.BackupMetaData, overwrite: true);
+        JsonSerializer.SerializeToFile(DeletedTimeStampsFile, DeletedTimeStamps, BackupJsonContext.Default.DictionaryStringDateTime, overwrite: true);
     }
 
     public static Backup Create(DirectoryInfo root)

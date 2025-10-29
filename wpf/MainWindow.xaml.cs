@@ -45,7 +45,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        await TryAction("Syncing...", () => FileSyncer.AdvancedSync(SelectedBackupConfig, _progress, _workingOn));
+        await TryAction("Syncing...", () => FileSyncer.Sync(SelectedBackupConfig, _progress, _workingOn));
     }
 
     private void Verify_Click(object sender, RoutedEventArgs e)
@@ -58,15 +58,23 @@ public partial class MainWindow : Window
         // await TryAction("Verifying...", () => BackupManager.VerifyBackup(_progress));
     }
 
-    private async Task TryAction(string label, Action action)
+    private async Task TryAction(string label, Func<Task<ErrorState>> action)
     {
         ResetProgress();
         StatusLabel.Content = label;
         ProgressDisplay.IsIndeterminate = true;
         try
         {
-            await Task.Run(action);
-            FinishProgress();
+            var error = await Task.Run(action);
+            if (error.Branch(out var e))
+            {
+                FinishProgress();
+            }
+            else
+            {
+                MessageBoxHelper.ShowError(e.Message, owner: this);
+                StatusLabel.Content = "Failed!";
+            }
         }
         catch (Exception ex)
         {
@@ -76,7 +84,7 @@ public partial class MainWindow : Window
         ProgressDisplay.IsIndeterminate = false;
     }
 
-    private void AddBackupLocation(object sender, RoutedEventArgs e)
+    private async void AddBackupLocation(object sender, RoutedEventArgs e)
     {
         if (SelectedBackupConfig is null)
         {
@@ -91,6 +99,7 @@ public partial class MainWindow : Window
             BackupConfigSerializer.Save(SelectedBackupConfig);
             BackupLocations.ItemsSource = null;
             BackupLocations.ItemsSource = SelectedBackupConfig.BackupDirectories;
+            await (await BackupV2.CreateAsync(new(dialog.FolderName))).SaveAsync();
         }
     }
 
@@ -132,6 +141,7 @@ public partial class MainWindow : Window
     {
         ProgressDisplay.Value = 0;
     }
+
     private void FinishProgress()
     {
         ProgressDisplay.Value = 1;

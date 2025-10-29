@@ -27,6 +27,7 @@ public sealed class BackupV2
         this.rootNode = rootNode;
     }
 
+    private const string EMPTY_FILE = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     public async Task Backup(string path, DirectoryInfo origin)
     {
         DirectoryNotFoundException.ExistsOrThrow(origin);
@@ -35,7 +36,7 @@ public sealed class BackupV2
         FileNotFoundException.ExistsOrThrow(source);
 
         using var stream = source.OpenRead();
-        var hash = new string(Base64Url.EncodeToChars(stream.ComputeSHA256Hash()));
+        var hash = Convert.ToHexStringLower(stream.ComputeSHA256Hash());
         var destination = GetFileInfoFromHash(hash, source.Extension);
 
         var node = GetOrCreateFile(path);
@@ -44,7 +45,7 @@ public sealed class BackupV2
         if (info.GetLatest()?.Hash == hash)
         {
             Debug.Assert(destination.Exists);
-            Debug.Assert(source.LastWriteTimeUtc == destination.LastWriteTimeUtc);
+            // Debug.Assert(source.LastWriteTimeUtc == destination.LastWriteTimeUtc); // with duplicate files this won't match
             Debug.Assert(source.Length == destination.Length);
         }
         else
@@ -215,7 +216,7 @@ public sealed class BackupV2
 
     internal FileInfo GetFileInfoFromHash(string hash, string extension)
     {
-        var folderName = $"d-{hash.AsSpan(..6)}";
+        var folderName = $"d-{hash.AsSpan(..3)}";
         var fileName = $"f-{hash}{extension}";
         return Storage.Directory(folderName).File(fileName);
     }
