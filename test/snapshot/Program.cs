@@ -99,7 +99,7 @@ void AssertFileBackedUp(FileInfo fileInfo)
     {
         if (!AssertExistsInBackup(backup, relativePath)) continue;
         var node = backup.GetFile(relativePath).OrThrow();
-        if (hash.SequenceEqual(Base64Url.DecodeFromChars(node.Info.GetLatest()!.Hash))) continue;
+        if (hash.SequenceEqual(Convert.FromHexString(node.Info.GetLatest()!.Hash))) continue;
         Console.WriteLine($"❌: {relativePath} is not correctly backed up to {backup.Root}");
     }
 }

@@ -3,17 +3,16 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>$(DotNetVersion)-windows</TargetFramework>
-	  <LangVersion>preview</LangVersion>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
-	  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-	  <PublishSingleFile>true</PublishSingleFile>
-	  <SelfContained>true</SelfContained>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Packages\Ametrin.Utils.WPF\Ametrin.Utils.WPF.csproj" />
+    <ProjectReference Include="..\..\..\Packages\Ametrin.Utils\wpf\Ametrin.Utils.WPF.csproj" />
     <ProjectReference Include="..\core\IBS.Core.csproj" />
   </ItemGroup>
 

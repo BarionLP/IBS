@@ -5,7 +5,7 @@ using Ametrin.Utils.WPF;
 
 namespace IBS;
 
-public partial class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     private readonly Progress<float> _progress;
     private readonly Progress<string> _workingOn;

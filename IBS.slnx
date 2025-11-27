@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="../../Packages/Ametrin.Utils.WPF/Ametrin.Utils.WPF.csproj" />
+  <Project Path="../../Packages/Ametrin.Utils/wpf/Ametrin.Utils.WPF.csproj" />
   <Project Path="../../Packages/Ametrin.Utils/src/Ametrin.Utils.csproj" />
   <Project Path="wpf/IBS.csproj" />
   <Project Path="core/IBS.Core.csproj" />
