@@ -150,7 +150,7 @@ public static class FileSyncer
 
             // sync subdirectories
             var subDirectories = directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude).ToArray();
-            subDirectories.Consume(Sync);
+            subDirectories.ForEach(Sync);
 
             // mark remaining directories as deleted
             foreach (var info in backupInfos)
