@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:core="using:IBS.Core"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="IBS.MainWindow"
+        TransparencyLevelHint="Mica, Blur"
+        Background="Transparent"
+        Title="Intelligent Backup System">
+    <Grid ColumnDefinitions="* * *" RowDefinitions="AUTO *">
+        
+        <Button Grid.Row="0" Grid.Column="0" Content="Add Backup Config" Click="AddBackupConfig" Margin="4 0"/>
+        <ListBox Grid.Row="1" Grid.Column="0" Name="BackupsView" SelectionMode="Single" SelectionChanged="BackupSelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="core:BackupConfig">
+                    <SelectableTextBlock Text="{Binding OriginDirectory}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Grid.RowSpan="2" CornerRadius="4" Margin="0 0 4 4" Background="{DynamicResource LayerFillColorDefaultBrush}"/>
+
+        <Button x:Name="SyncButton" Grid.Row="0" Grid.Column="1" Content="Sync" Click="Sync_Click" HorizontalAlignment="Stretch" Margin="4 4 2 0"/>
+        <Button x:Name="VerifyButton" Grid.Row="0" Grid.Column="2" Content="Verify" Click="Verify_Click" HorizontalAlignment="Stretch" Margin="2 4 8 0"/>
+        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" Margin="4 8 0 0">
+                <Label Margin="0 0 4 0">Status:</Label>
+                <Label x:Name = "StatusLabel">Idle</Label>
+            </StackPanel>
+            <ProgressBar x:Name="ProgressDisplay" Margin="4 0 8 0"/>
+            <ListBox x:Name="BackupLocations">
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add Location" Click="AddBackupLocation" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
+        </StackPanel>
+    </Grid>
+</Window>
