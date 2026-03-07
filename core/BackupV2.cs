@@ -1,7 +1,7 @@
 using System.Buffers;
-using System.Buffers.Text;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Ametrin.Serialization;
 using IBS.Core.Serialization;
@@ -27,7 +27,7 @@ public sealed class BackupV2
         this.rootNode = rootNode;
     }
 
-    private const string EMPTY_FILE = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    private const string EMPTY_FILE_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     public async Task Backup(string path, DirectoryInfo origin)
     {
         DirectoryNotFoundException.ExistsOrThrow(origin);
@@ -35,28 +35,43 @@ public sealed class BackupV2
         var source = origin.File(path);
         FileNotFoundException.ExistsOrThrow(source);
 
-        using var stream = source.OpenRead();
-        var hash = Convert.ToHexStringLower(stream.ComputeSHA256Hash());
-        var destination = GetFileInfoFromHash(hash, source.Extension);
-
         var node = GetOrCreateFile(path);
         var info = node.Info;
         info.DeletedAt = null;
-        if (info.GetLatest()?.Hash == hash)
+
+        var latest = info.GetLatest();
+
+        if (latest is not null)
+        {
+            var latestFile = GetFileInfoFromHash(latest.Hash, source.Extension);
+            Debug.Assert(latestFile.Exists);
+            if (latestFile.Length == source.Length && latest.LastWriteTimeUtc == source.LastWriteTimeUtc)
+            {
+                return;
+            }
+
+            Debug.Assert(latest.LastWriteTimeUtc < source.LastWriteTimeUtc);
+        }
+
+        using var stream = source.OpenRead();
+        var hash = Convert.ToHexStringLower(await SHA256.HashDataAsync(stream)); // TODO: cache shared accross Backup instances 
+        var destination = GetFileInfoFromHash(hash, source.Extension);
+
+        if (latest?.Hash == hash)
         {
             Debug.Assert(destination.Exists);
-            // Debug.Assert(source.LastWriteTimeUtc == destination.LastWriteTimeUtc); // with duplicate files this won't match
+            // Debug.Assert(source.LastWriteTimeUtc == destination.LastWriteTimeUtc);
             Debug.Assert(source.Length == destination.Length);
         }
         else
         {
-            info.Versions.Add(new(DateTime.Now, hash));
+            info.Versions.Add(new(DateTime.UtcNow, source.LastWriteTimeUtc, hash));
         }
 
         if (!destination.Exists)
         {
             destination.Directory!.Create();
-            await source.CopyToAsync(destination);
+            await source.CopyToAsync(destination, overwrite: false);
         }
     }
 
@@ -103,7 +118,7 @@ public sealed class BackupV2
     public bool IsSoftDeleted(FileNode node)
     {
         Debug.Assert(node.Backup == this);
-        return node.Info.DeletedAt is not null;
+        return node.Info.IsSoftDeleted;
     }
 
     public bool BelongsHere(FileInfo file) => file.FullName.StartsWith(Storage.FullName, StringComparison.OrdinalIgnoreCase);
@@ -160,7 +175,7 @@ public sealed class BackupV2
             }
         }
     }
-    
+
     public FileNode GetOrCreateFile(string path)
     {
         using var nodeNameRanges = path.SplitAny(PathSplitChars);
@@ -267,8 +282,9 @@ public sealed class BackupV2
     {
         public List<Version> Versions { get; set; } = versions ?? [];
         public DateTime? DeletedAt { get; set; } = deletedAt;
-        public Version? GetLatest() => Versions.MaxBy(static v => v.SavedAt)!;
-        public sealed record Version(DateTime SavedAt, string Hash);
+        public Version? GetLatest() => Versions.MaxBy(static v => v.SavedAt);
+        // identical files share their file-meta data so we need to preserve the relevant data here
+        public sealed record Version(DateTime SavedAt, DateTime LastWriteTimeUtc, string Hash);
     }
 
     public sealed class DirectoryNodeInfo : NodeInfo
@@ -306,4 +322,12 @@ public sealed class BackupV2
     }
 
     public abstract class NodeInfo;
+}
+
+public static class BackupV2Extensions
+{
+    extension(BackupV2.FileNodeInfo info)
+    {
+        public bool IsSoftDeleted => info.DeletedAt is not null;
+    }
 }

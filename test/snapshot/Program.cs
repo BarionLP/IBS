@@ -1,11 +1,10 @@
-﻿using System.Buffers.Text;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Ametrin.Optional;
 using Ametrin.Utils;
 using IBS.Core;
 using IBS.Core.Serialization;
 
-var origin = new DirectoryInfo(@"I:\Coding\TestChamber\IBS\Origin");
+var origin = new DirectoryInfo("/mnt/Projects/Coding/TestChamber/IBS/Origin/");
 if (!origin.Exists)
 {
     Console.WriteLine("❌: test directory not found!");
@@ -48,6 +47,8 @@ AssertAboutNow(backups[0].MetaData.LastWriteTime, $"{backups[0].Root} says it wa
 AssertAboutNow(backups[1].MetaData.LastWriteTime, $"{backups[1].Root} says it was not synced");
 
 Console.WriteLine("✅: no further errors found");
+
+await Restorer.RestoreV2(backups[0], origin.Parent!.Directory("Restore"));
 
 ResetGit(origin.Parent!);
 
@@ -93,13 +94,13 @@ void AssertFileBackedUp(FileInfo fileInfo)
 {
     if (!AssertExists(fileInfo)) return;
 
-    var hash = fileInfo.ComputeSHA256Hash();
+    var hash = Convert.ToHexStringLower(fileInfo.ComputeSHA256Hash());
     var relativePath = fileInfo.GetRelativePath(origin);
     foreach (var backup in backups)
     {
         if (!AssertExistsInBackup(backup, relativePath)) continue;
         var node = backup.GetFile(relativePath).OrThrow();
-        if (hash.SequenceEqual(Convert.FromHexString(node.Info.GetLatest()!.Hash))) continue;
+        if (hash == node.Info.GetLatest()!.Hash) continue;
         Console.WriteLine($"❌: {relativePath} is not correctly backed up to {backup.Root}");
     }
 }
@@ -172,16 +173,28 @@ static void AskToResetGit(DirectoryInfo root)
 static void ResetGit(DirectoryInfo root)
 {
     // Discard all changes including untracked files
-    var resetPsi = new ProcessStartInfo
+    RunGit(root, "reset --hard");
+    RunGit(root, "clean -fd");
+}
+
+static void RunGit(DirectoryInfo root, string arguments)
+{
+    using var process = Process.Start(new ProcessStartInfo
     {
-        FileName = "cmd",
-        Arguments = "/C git reset --hard && git clean -fd",
+        FileName = "git",
+        Arguments = arguments,
         WorkingDirectory = root.FullName,
         RedirectStandardOutput = true,
         RedirectStandardError = true,
         UseShellExecute = false,
         CreateNoWindow = true
-    };
-    using var resetProcess = Process.Start(resetPsi)!;
-    resetProcess.WaitForExit();
+    })!;
+    process.WaitForExit();
+
+
+    if (process.ExitCode is not 0)
+    {
+        var error = process.StandardError.ReadToEnd();
+        throw new InvalidOperationException($"git {arguments} failed: {error}");
+    }
 }

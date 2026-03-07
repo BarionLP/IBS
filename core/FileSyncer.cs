@@ -194,10 +194,10 @@ public static class FileOperations
     {
         public static async Task CopyAsync(string sourceFileName, string destFileName, bool overwrite = false, CancellationToken token = default)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(sourceFileName);
+            FileNotFoundException.ExistsOrThrow(sourceFileName);
             ArgumentException.ThrowIfNullOrWhiteSpace(destFileName);
 
-            if (File.Exists(destFileName) && !overwrite)
+            if (!overwrite && File.Exists(destFileName))
             {
                 throw new IOException();
             }
@@ -205,17 +205,23 @@ public static class FileOperations
             using var source = File.OpenRead(sourceFileName);
             using var destination = File.Create(destFileName);
 
+            // needs to be async because Dispose on source and destination has to wait
             await source.CopyToAsync(destination, token);
         }
 
-        public static Task CopyAsync(FileInfo sourceFileInfo, FileInfo destFileInfo, bool overwrite = false, CancellationToken token = default)
+        public static async Task CopyAsync(FileInfo sourceFileInfo, FileInfo destFileInfo, bool overwrite = false, CancellationToken token = default)
         {
-            if (destFileInfo.Exists && !overwrite)
+            FileNotFoundException.ExistsOrThrow(sourceFileInfo);
+            if (!overwrite && destFileInfo.Exists)
             {
                 throw new IOException();
             }
 
-            return Task.Run(() => sourceFileInfo.CopyTo(destFileInfo), token);
+            using var source = sourceFileInfo.OpenRead();
+            using var destination = destFileInfo.Create();
+
+            // needs to be async because Dispose on source and destination has to wait
+            await source.CopyToAsync(destination, token);
         }
     }
 
