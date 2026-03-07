@@ -6,7 +6,8 @@ public sealed class BackupConfig
 {
     public DirectoryInfo OriginDirectory { get; }
     public List<DirectoryInfo> BackupDirectories { get; } = [];
-    [JsonIgnore] public FileInfo ConfigFileInfo { get; }
+    public required FileInfo ConfigFileInfo { get; init; }
+    public required FileInfo IgnoresFileInfo { get; init; }
 
     public List<string> IgnoredPaths { get; } = [];
     public List<string> IgnoredFileExtensions { get; } = [];
@@ -14,21 +15,16 @@ public sealed class BackupConfig
     public List<string> IgnoredFolderNames { get; } = [];
     public List<string> IgnoredFileNames { get; } = [];
 
-    // backwards compat (when removing, also remove constructor arguments)
-    public DirectoryInfo OriginInfo { set { } }
-    public List<DirectoryInfo> BackupInfos { set { } }
-
     private BackupConfig(DirectoryInfo originDirectory)
     {
         OriginDirectory = originDirectory;
-        ConfigFileInfo = OriginDirectory.File("backup_config.json");
     }
 
     [JsonConstructor]
-    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames, List<DirectoryInfo>? backupInfos = null, DirectoryInfo? originInfo = null) :
-        this(originDirectory ?? originInfo ?? throw new ArgumentNullException(nameof(originDirectory)))
+    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames) :
+        this(Guard.ThrowIfNull(originDirectory))
     {
-        BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories ?? backupInfos);
+        BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories);
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
         IgnoredPrefixes = ignoredPrefixes;
@@ -38,7 +34,15 @@ public sealed class BackupConfig
 
     public static BackupConfig Create(string originPath, string backupPath)
     {
-        var config = new BackupConfig(new(originPath));
+        ArgumentException.ThrowIfNullOrWhiteSpace(originPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
+
+        var origin = new DirectoryInfo(originPath);
+        var config = new BackupConfig(origin)
+        {
+            ConfigFileInfo = origin.File("backup_config.json"),
+            IgnoresFileInfo = origin.File("backup_ignores.json"),
+        };
 
         config.AddBackupLocation(backupPath);
 
