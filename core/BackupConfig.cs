@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace IBS.Core;
 
@@ -9,11 +10,11 @@ public sealed class BackupConfig
     public required FileInfo ConfigFileInfo { get; init; }
     public required FileInfo IgnoresFileInfo { get; init; }
 
-    public List<string> IgnoredPaths { get; } = [];
-    public List<string> IgnoredFileExtensions { get; } = [];
+    public HashSet<string> IgnoredPaths { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> IgnoredFileExtensions { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<string> IgnoredPrefixes { get; } = [];
-    public List<string> IgnoredFolderNames { get; } = [];
-    public List<string> IgnoredFileNames { get; } = [];
+    public HashSet<string> IgnoredFolderNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> IgnoredFileNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     private BackupConfig(DirectoryInfo originDirectory)
     {
@@ -21,10 +22,14 @@ public sealed class BackupConfig
     }
 
     [JsonConstructor]
-    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames) :
+    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, HashSet<string> ignoredPaths, HashSet<string> ignoredFileExtensions, List<string> ignoredPrefixes, HashSet<string> ignoredFolderNames, HashSet<string> ignoredFileNames) :
         this(Guard.ThrowIfNull(originDirectory))
     {
         BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories);
+        Debug.Assert(ignoredPaths.Comparer == StringComparer.OrdinalIgnoreCase);
+        Debug.Assert(ignoredFileExtensions.Comparer == StringComparer.OrdinalIgnoreCase);
+        Debug.Assert(ignoredFolderNames.Comparer == StringComparer.OrdinalIgnoreCase);
+        Debug.Assert(ignoredFileNames.Comparer == StringComparer.OrdinalIgnoreCase);
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
         IgnoredPrefixes = ignoredPrefixes;
@@ -53,7 +58,7 @@ public sealed class BackupConfig
 
         config.IgnoreFolders("System Volume Information", ".Trash-1000", ".git");
         config.IgnoreExtensions(".blend1", ".deleted", ".old", ".tmp");
-        config.IgnoreFiles("desktop.ini");
+        config.IgnoreFiles("desktop.ini", "bootTel.dat");
         config.IgnorePrefix("$");
 
         return config;
@@ -89,24 +94,24 @@ public sealed class BackupConfig
         return false;
     }
 
-    public BackupConfig IgnoreFolders(params ReadOnlySpan<string> folderName)
-    {
-        IgnoredFolderNames.AddRange(folderName);
-        return this;
-    }
     public BackupConfig IgnorePaths(params ReadOnlySpan<string> path)
     {
-        IgnoredPaths.AddRange(path);
+        IgnoredPaths.UnionWith(path);
+        return this;
+    }
+    public BackupConfig IgnoreFolders(params ReadOnlySpan<string> folderNames)
+    {
+        IgnoredFolderNames.UnionWith(folderNames);
         return this;
     }
     public BackupConfig IgnoreExtensions(params ReadOnlySpan<string> extensions)
     {
-        IgnoredFileExtensions.AddRange(extensions);
+        IgnoredFileExtensions.UnionWith(extensions);
         return this;
     }
     public BackupConfig IgnoreFiles(params ReadOnlySpan<string> fileNames)
     {
-        IgnoredFileNames.AddRange(fileNames);
+        IgnoredFileNames.UnionWith(fileNames);
         return this;
     }
     public BackupConfig IgnorePrefix(params ReadOnlySpan<string> keywords)

@@ -118,7 +118,7 @@ public static class FileSyncer
         void Sync(DirectoryInfo directory)
         {
             var relativeDirectory = directory.GetRelativePath(config.OriginDirectory);
-            var files = GetFiles(directory);
+            var files = GetFiles(directory).Where(config.ShouldInclude);
 
             // read all files in the backup
             var backupInfos = backups.Select(backup =>
@@ -170,7 +170,7 @@ public static class FileSyncer
         }
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory)
-            => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
+            => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly) : [];
 
         void SyncFile(FileInfo from, FileInfo to)
         {

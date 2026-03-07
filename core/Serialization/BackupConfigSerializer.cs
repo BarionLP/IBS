@@ -26,6 +26,11 @@ public static class BackupConfigSerializer
             config.IgnoredFileNames.Add("desktop.ini");
             wasUpgrade = true;
         }
+        if (!config.IgnoredFileNames.Contains("bootTel.dat"))
+        {
+            config.IgnoredFileNames.Add("bootTel.dat");
+            wasUpgrade = true;
+        }
 
         foreach (var i in ..config.BackupDirectories.Count)
         {
@@ -44,40 +49,45 @@ public static class BackupConfigSerializer
         return config;
     }
 
+    private static string NormalizePath(string root, string path)
+        => Path.Combine(root, path);
+
     private static BackupConfig MakeBackupConfig(BackupConfigDto config, BackupIgnores ignores, FileInfo source)
     {
-        if (config.IgnoredPaths is not null)
-        {
-            ignores.IgnoredPaths.AddRange(config.IgnoredPaths);
-        }
-        if (config.IgnoredFileExtensions is not null)
-        {
-            ignores.IgnoredFileExtensions.AddRange(config.IgnoredFileExtensions);
-        }
-        if (config.IgnoredPrefixes is not null)
-        {
-            ignores.IgnoredPrefixes.AddRange(config.IgnoredPrefixes);
-        }
-        if (config.IgnoredFolderNames is not null)
-        {
-            ignores.IgnoredFolderNames.AddRange(config.IgnoredFolderNames);
-        }
-        if (config.IgnoredFolderNames is not null)
-        {
-            ignores.IgnoredFolderNames.AddRange(config.IgnoredFolderNames);
-        }
-
-        return new(config.OriginDirectory, config.BackupDirectories,
-            ignoredPaths: [.. ignores.IgnoredPaths.Select(p => Path.Combine(config.OriginDirectory.FullName, p))],
-            ignoredFileExtensions: ignores.IgnoredFileExtensions,
+        var created = new BackupConfig(config.OriginDirectory, config.BackupDirectories,
+            ignoredPaths: ignores.IgnoredPaths.Select(p => NormalizePath(config.OriginDirectory.FullName, p)).ToHashSet(StringComparer.OrdinalIgnoreCase),
+            ignoredFileExtensions: ignores.IgnoredFileExtensions.ToHashSet(StringComparer.OrdinalIgnoreCase),
             ignoredPrefixes: ignores.IgnoredPrefixes,
-            ignoredFolderNames: ignores.IgnoredFolderNames,
-            ignoredFileNames: ignores.IgnoredFileNames
+            ignoredFolderNames: ignores.IgnoredFolderNames.ToHashSet(StringComparer.OrdinalIgnoreCase),
+            ignoredFileNames: ignores.IgnoredFileNames.ToHashSet(StringComparer.OrdinalIgnoreCase)
         )
         {
             ConfigFileInfo = source,
-            IgnoresFileInfo = config.IgnoresFileInfo ?? config.OriginDirectory.File("backup_ignores.json"),
+            IgnoresFileInfo = config.IgnoresFileInfo ?? config.OriginDirectory.File("backup_ignore.json"),
         };
+
+        if (config.IgnoredPaths is not null)
+        {
+            created.IgnoredPaths.UnionWith(config.IgnoredPaths.Select(p => NormalizePath(config.OriginDirectory.FullName, p)));
+        }
+        if (config.IgnoredFileExtensions is not null)
+        {
+            created.IgnoredFileExtensions.UnionWith(config.IgnoredFileExtensions);
+        }
+        if (config.IgnoredPrefixes is not null)
+        {
+            created.IgnoredPrefixes.AddRange(config.IgnoredPrefixes);
+        }
+        if (config.IgnoredFolderNames is not null)
+        {
+            created.IgnoredFolderNames.UnionWith(config.IgnoredFolderNames);
+        }
+        if (config.IgnoredFileNames is not null)
+        {
+            created.IgnoredFileNames.UnionWith(config.IgnoredFileNames);
+        }
+
+        return created;
     }
 
     internal sealed class BackupConfigDto
@@ -85,11 +95,11 @@ public static class BackupConfigSerializer
         public DirectoryInfo OriginDirectory { get; }
         public List<DirectoryInfo> BackupDirectories { get; }
         public FileInfo? IgnoresFileInfo { get; }
-        public List<string>? IgnoredPaths { get; }
-        public List<string>? IgnoredFileExtensions { get; }
+        public HashSet<string>? IgnoredPaths { get; }
+        public HashSet<string>? IgnoredFileExtensions { get; }
         public List<string>? IgnoredPrefixes { get; }
-        public List<string>? IgnoredFolderNames { get; }
-        public List<string>? IgnoredFileNames { get; }
+        public HashSet<string>? IgnoredFolderNames { get; }
+        public HashSet<string>? IgnoredFileNames { get; }
 
         public BackupConfigDto(BackupConfig config)
         {
@@ -99,7 +109,7 @@ public static class BackupConfigSerializer
         }
 
         [JsonConstructor, EditorBrowsable(EditorBrowsableState.Never)]
-        internal BackupConfigDto(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, FileInfo ignoresFileInfo, List<string>? ignoredPaths = null, List<string>? ignoredFileExtensions = null, List<string>? ignoredPrefixes = null, List<string>? ignoredFolderNames = null, List<string>? ignoredFileNames = null)
+        internal BackupConfigDto(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, FileInfo ignoresFileInfo, HashSet<string>? ignoredPaths = null, HashSet<string>? ignoredFileExtensions = null, List<string>? ignoredPrefixes = null, HashSet<string>? ignoredFolderNames = null, HashSet<string>? ignoredFileNames = null)
         {
             OriginDirectory = originDirectory;
             BackupDirectories = backupDirectories;
@@ -115,10 +125,10 @@ public static class BackupConfigSerializer
     internal sealed class BackupIgnores
     {
         public List<string> IgnoredPaths { get; }
-        public List<string> IgnoredFileExtensions { get; }
+        public IEnumerable<string> IgnoredFileExtensions { get; }
         public List<string> IgnoredPrefixes { get; }
-        public List<string> IgnoredFolderNames { get; }
-        public List<string> IgnoredFileNames { get; }
+        public IEnumerable<string> IgnoredFolderNames { get; }
+        public IEnumerable<string> IgnoredFileNames { get; }
 
         public BackupIgnores(BackupConfig config)
         {
@@ -130,7 +140,7 @@ public static class BackupConfigSerializer
         }
 
         [JsonConstructor, EditorBrowsable(EditorBrowsableState.Never)]
-        internal BackupIgnores(List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames)
+        internal BackupIgnores(List<string> ignoredPaths, IEnumerable<string> ignoredFileExtensions, List<string> ignoredPrefixes, IEnumerable<string> ignoredFolderNames, IEnumerable<string> ignoredFileNames)
         {
             IgnoredPaths = ignoredPaths;
             IgnoredFileExtensions = ignoredFileExtensions;
