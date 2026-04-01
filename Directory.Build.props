@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
     <DotNetVersion>net10.0</DotNetVersion>
-    <AvaloniaVersion>11.3.12</AvaloniaVersion>
+    <AvaloniaVersion>11.3.13</AvaloniaVersion>
   </PropertyGroup>
 </Project>
