@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Ametrin.Optional.Nullable;
 using Ametrin.Serialization;
 
 namespace IBS.Core.Serialization;
@@ -16,19 +17,18 @@ public static class BackupConfigSerializer
     public static Result<BackupConfig> Load(FileInfo fileInfo)
     {
         var configdto = JsonSerializer.Deserialize(fileInfo, BackupJsonContext.Default.BackupConfigDto);
-        var ignores = configdto.IgnoresFileInfo is null || !configdto.IgnoresFileInfo.Exists ? new([], [], [], [], []) : JsonSerializer.Deserialize(configdto.IgnoresFileInfo, BackupJsonContext.Default.BackupIgnores);
+        var ignoreFileInfo = configdto.IgnoreInfoPath.Map(configdto.OriginDirectory.File);
+        var ignores = ignoreFileInfo is null || !ignoreFileInfo.Exists ? new([], [], [], [], []) : JsonSerializer.Deserialize(ignoreFileInfo, BackupJsonContext.Default.BackupIgnores);
         var config = MakeBackupConfig(configdto, ignores, fileInfo);
 
-        var wasUpgrade = configdto.IgnoresFileInfo is null;
+        var wasUpgrade = configdto.IgnoreInfoPath is null;
 
-        if (!config.IgnoredFileNames.Contains("desktop.ini"))
+        if (config.IgnoredFileNames.Add("desktop.ini"))
         {
-            config.IgnoredFileNames.Add("desktop.ini");
             wasUpgrade = true;
         }
-        if (!config.IgnoredFileNames.Contains("bootTel.dat"))
+        if (config.IgnoredFileNames.Add("bootTel.dat"))
         {
-            config.IgnoredFileNames.Add("bootTel.dat");
             wasUpgrade = true;
         }
 
@@ -50,7 +50,7 @@ public static class BackupConfigSerializer
     }
 
     private static string NormalizePath(string root, string path)
-        => Path.Combine(root, path);
+        => new FileInfo(Path.Combine(root, path)).FullName;
 
     private static BackupConfig MakeBackupConfig(BackupConfigDto config, BackupIgnores ignores, FileInfo source)
     {
@@ -63,7 +63,7 @@ public static class BackupConfigSerializer
         )
         {
             ConfigFileInfo = source,
-            IgnoresFileInfo = config.IgnoresFileInfo ?? config.OriginDirectory.File("backup_ignore.json"),
+            IgnoresFileInfo = config.IgnoreInfoPath is not null ? config.OriginDirectory.File(config.IgnoreInfoPath) : config.OriginDirectory.File("backup_ignore.json"),
         };
 
         if (config.IgnoredPaths is not null)
@@ -94,7 +94,8 @@ public static class BackupConfigSerializer
     {
         public DirectoryInfo OriginDirectory { get; }
         public List<DirectoryInfo> BackupDirectories { get; }
-        public FileInfo? IgnoresFileInfo { get; }
+        public string? IgnoreInfoPath { get; }
+        public string? IgnoresFileInfo { get; }
         public HashSet<string>? IgnoredPaths { get; }
         public HashSet<string>? IgnoredFileExtensions { get; }
         public List<string>? IgnoredPrefixes { get; }
@@ -105,15 +106,16 @@ public static class BackupConfigSerializer
         {
             OriginDirectory = config.OriginDirectory;
             BackupDirectories = config.BackupDirectories;
-            IgnoresFileInfo = config.IgnoresFileInfo;
+            IgnoresFileInfo = config.IgnoresFileInfo.GetRelativePath(config.OriginDirectory);
         }
 
         [JsonConstructor, EditorBrowsable(EditorBrowsableState.Never)]
-        internal BackupConfigDto(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, FileInfo ignoresFileInfo, HashSet<string>? ignoredPaths = null, HashSet<string>? ignoredFileExtensions = null, List<string>? ignoredPrefixes = null, HashSet<string>? ignoredFolderNames = null, HashSet<string>? ignoredFileNames = null)
+        internal BackupConfigDto(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, string? ignoreInfoPath, string? ignoresFileInfo, HashSet<string>? ignoredPaths = null, HashSet<string>? ignoredFileExtensions = null, List<string>? ignoredPrefixes = null, HashSet<string>? ignoredFolderNames = null, HashSet<string>? ignoredFileNames = null)
         {
             OriginDirectory = originDirectory;
             BackupDirectories = backupDirectories;
-            IgnoresFileInfo = ignoresFileInfo;
+            IgnoreInfoPath = ignoreInfoPath ?? ignoresFileInfo;
+            IgnoresFileInfo = null;
             IgnoredPaths = ignoredPaths;
             IgnoredFileExtensions = ignoredFileExtensions;
             IgnoredPrefixes = ignoredPrefixes;
