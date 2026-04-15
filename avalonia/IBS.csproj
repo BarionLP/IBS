@@ -4,8 +4,9 @@
     <TargetFramework>$(DotNetVersion)</TargetFramework>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <!-- <BuiltInComInteropSupport>true</BuiltInComInteropSupport> -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
