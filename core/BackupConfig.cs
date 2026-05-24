@@ -23,9 +23,9 @@ public sealed class BackupConfig
 
     [JsonConstructor]
     public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, HashSet<string> ignoredPaths, HashSet<string> ignoredFileExtensions, List<string> ignoredPrefixes, HashSet<string> ignoredFolderNames, HashSet<string> ignoredFileNames) :
-        this(Guard.ThrowIfNull(originDirectory))
+        this(ThrowIf.Null(originDirectory))
     {
-        BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories);
+        BackupDirectories = ThrowIf.NullOrEmpty(backupDirectories);
         Debug.Assert(ignoredPaths.Comparer == StringComparer.OrdinalIgnoreCase);
         Debug.Assert(ignoredFileExtensions.Comparer == StringComparer.OrdinalIgnoreCase);
         Debug.Assert(ignoredFolderNames.Comparer == StringComparer.OrdinalIgnoreCase);
