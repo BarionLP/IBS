@@ -20,7 +20,7 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
         if (!BelongsHere(file)) throw new ArgumentException("Cannot delete files outside of the current backup", nameof(file));
 
         var newPath = $"{file.FullName}{DELETED_EXTENSION}";
-        file.MoveTo(newPath);
+        file.MoveTo(newPath, overwrite: true); // overwrite older deleted files
         DeletedTimeStamps[newPath] = DateTime.Now;
     }
 
