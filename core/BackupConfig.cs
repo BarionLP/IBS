@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace IBS.Core;
 
@@ -6,29 +7,29 @@ public sealed class BackupConfig
 {
     public DirectoryInfo OriginDirectory { get; }
     public List<DirectoryInfo> BackupDirectories { get; } = [];
-    [JsonIgnore] public FileInfo ConfigFileInfo { get; }
+    public required FileInfo ConfigFileInfo { get; init; }
+    public required FileInfo IgnoresFileInfo { get; init; }
 
-    public List<string> IgnoredPaths { get; } = [];
-    public List<string> IgnoredFileExtensions { get; } = [];
+    public HashSet<string> IgnoredPaths { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> IgnoredFileExtensions { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<string> IgnoredPrefixes { get; } = [];
-    public List<string> IgnoredFolderNames { get; } = [];
-    public List<string> IgnoredFileNames { get; } = [];
-
-    // backwards compat (when removing, also remove constructor arguments)
-    public DirectoryInfo OriginInfo { set { } }
-    public List<DirectoryInfo> BackupInfos { set { } }
+    public HashSet<string> IgnoredFolderNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> IgnoredFileNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     private BackupConfig(DirectoryInfo originDirectory)
     {
         OriginDirectory = originDirectory;
-        ConfigFileInfo = OriginDirectory.File("backup_config.json");
     }
 
     [JsonConstructor]
-    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, List<string> ignoredPaths, List<string> ignoredFileExtensions, List<string> ignoredPrefixes, List<string> ignoredFolderNames, List<string> ignoredFileNames, List<DirectoryInfo>? backupInfos = null, DirectoryInfo? originInfo = null) :
-        this(originDirectory ?? originInfo ?? throw new ArgumentNullException(nameof(originDirectory)))
+    public BackupConfig(DirectoryInfo originDirectory, List<DirectoryInfo> backupDirectories, HashSet<string> ignoredPaths, HashSet<string> ignoredFileExtensions, List<string> ignoredPrefixes, HashSet<string> ignoredFolderNames, HashSet<string> ignoredFileNames) :
+        this(ThrowIf.Null(originDirectory))
     {
-        BackupDirectories = Guard.ThrowIfNullOrEmpty(backupDirectories ?? backupInfos);
+        BackupDirectories = ThrowIf.NullOrEmpty(backupDirectories);
+        Debug.Assert(ignoredPaths.Comparer == StringComparer.OrdinalIgnoreCase);
+        Debug.Assert(ignoredFileExtensions.Comparer == StringComparer.OrdinalIgnoreCase);
+        Debug.Assert(ignoredFolderNames.Comparer == StringComparer.OrdinalIgnoreCase);
+        Debug.Assert(ignoredFileNames.Comparer == StringComparer.OrdinalIgnoreCase);
         IgnoredPaths = ignoredPaths;
         IgnoredFileExtensions = ignoredFileExtensions;
         IgnoredPrefixes = ignoredPrefixes;
@@ -38,7 +39,15 @@ public sealed class BackupConfig
 
     public static BackupConfig Create(string originPath, string backupPath)
     {
-        var config = new BackupConfig(new(originPath));
+        ArgumentException.ThrowIfNullOrWhiteSpace(originPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(backupPath);
+
+        var origin = new DirectoryInfo(originPath);
+        var config = new BackupConfig(origin)
+        {
+            ConfigFileInfo = origin.File("backup_config.json"),
+            IgnoresFileInfo = origin.File("backup_ignores.json"),
+        };
 
         config.AddBackupLocation(backupPath);
 
@@ -49,7 +58,7 @@ public sealed class BackupConfig
 
         config.IgnoreFolders("System Volume Information", ".Trash-1000", ".git");
         config.IgnoreExtensions(".blend1", ".deleted", ".old", ".tmp");
-        config.IgnoreFiles("desktop.ini");
+        config.IgnoreFiles("desktop.ini", "bootTel.dat");
         config.IgnorePrefix("$");
 
         return config;
@@ -85,24 +94,24 @@ public sealed class BackupConfig
         return false;
     }
 
-    public BackupConfig IgnoreFolders(params ReadOnlySpan<string> folderName)
-    {
-        IgnoredFolderNames.AddRange(folderName);
-        return this;
-    }
     public BackupConfig IgnorePaths(params ReadOnlySpan<string> path)
     {
-        IgnoredPaths.AddRange(path);
+        IgnoredPaths.UnionWith(path);
+        return this;
+    }
+    public BackupConfig IgnoreFolders(params ReadOnlySpan<string> folderNames)
+    {
+        IgnoredFolderNames.UnionWith(folderNames);
         return this;
     }
     public BackupConfig IgnoreExtensions(params ReadOnlySpan<string> extensions)
     {
-        IgnoredFileExtensions.AddRange(extensions);
+        IgnoredFileExtensions.UnionWith(extensions);
         return this;
     }
     public BackupConfig IgnoreFiles(params ReadOnlySpan<string> fileNames)
     {
-        IgnoredFileNames.AddRange(fileNames);
+        IgnoredFileNames.UnionWith(fileNames);
         return this;
     }
     public BackupConfig IgnorePrefix(params ReadOnlySpan<string> keywords)

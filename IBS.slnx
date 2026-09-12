@@ -1,7 +1,7 @@
 <Solution>
-  <Project Path="../../Packages/Ametrin.Utils.WPF/Ametrin.Utils.WPF.csproj" />
+  <Project Path="../../Packages/Ametrin.Utils/avalonia/Ametrin.Utils.Avalonia.csproj" />
   <Project Path="../../Packages/Ametrin.Utils/src/Ametrin.Utils.csproj" />
-  <Project Path="wpf/IBS.csproj" />
+  <Project Path="avalonia/IBS.csproj" />
   <Project Path="core/IBS.Core.csproj" />
   <Project Path="test/snapshot/IBS.Test.Snapshot.csproj" />
   <Project Path="test/unit/IBS.Test.Unit.csproj" />

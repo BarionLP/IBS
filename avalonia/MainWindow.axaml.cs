@@ -1,7 +1,8 @@
-﻿using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using Ametrin.Utils.WPF;
+using System.Diagnostics;
+using Ametrin.Utils.Avalonia;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 
 namespace IBS;
 
@@ -19,9 +20,11 @@ public sealed partial class MainWindow : Window
             VerifyButton.IsEnabled = field is not null;
         }
     }
+
     public MainWindow()
     {
         InitializeComponent();
+
         DataContext = this;
         ResetProgress();
         BackupsView.ItemsSource = App.BackupConfigs;
@@ -32,7 +35,7 @@ public sealed partial class MainWindow : Window
             ProgressDisplay.Value = value;
         });
 
-        _workingOn = new Progress<string>(value =>
+        _workingOn = new(value =>
         {
             StatusLabel.Content = value;
         });
@@ -72,13 +75,13 @@ public sealed partial class MainWindow : Window
             }
             else
             {
-                MessageBoxHelper.ShowError(e.Message, owner: this);
+                await MessageBox.Error(e.Message).ShowDialog(this, MessageBoxResult.Ok);
                 StatusLabel.Content = "Failed!";
             }
         }
         catch (Exception ex)
         {
-            MessageBoxHelper.ShowError(ex.Message, owner: this);
+            await MessageBox.Error(ex.Message).ShowDialog(this, MessageBoxResult.Ok);
             StatusLabel.Content = "Failed!";
         }
         ProgressDisplay.IsIndeterminate = false;
@@ -91,16 +94,20 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var dialog = new Microsoft.Win32.OpenFolderDialog();
-        if (dialog.ShowDialog() is true)
-        {
-            var result = dialog.FolderName;
-            SelectedBackupConfig.AddBackupLocation(result);
-            BackupConfigSerializer.Save(SelectedBackupConfig);
-            BackupLocations.ItemsSource = null;
-            BackupLocations.ItemsSource = SelectedBackupConfig.BackupDirectories;
-            await (await BackupV2.CreateAsync(new(dialog.FolderName))).SaveAsync();
-        }
+        var folders = await StorageProvider.OpenFolderPickerAsync(new());
+
+        if (folders.Count is 0) return;
+
+        var path = folders[0].TryGetLocalPath();
+
+        Debug.Assert(path is not null);
+
+        SelectedBackupConfig.AddBackupLocation(path);
+        BackupConfigSerializer.Save(SelectedBackupConfig);
+
+        BackupLocations.ItemsSource = null;
+        BackupLocations.ItemsSource = SelectedBackupConfig.BackupDirectories;
+        await (await BackupV2.CreateAsync(new(path))).SaveAsync();
     }
 
     private void BackupSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -116,23 +123,26 @@ public sealed partial class MainWindow : Window
         BackupLocations.ItemsSource = SelectedBackupConfig.BackupDirectories;
     }
 
-    private void AddBackupConfig(object sender, RoutedEventArgs e)
+    private async void AddBackupConfig(object sender, RoutedEventArgs e)
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog() { Title = "Pick Origin" };
-        if (dialog.ShowDialog() is not true)
+
+        var folders = await StorageProvider.OpenFolderPickerAsync(new() { Title = "Pick Origin" });
+        if (folders is not [var origin])
         {
             return;
         }
 
-        var originPath = dialog.FolderName;
+        var originPath = origin.TryGetLocalPath()!;
 
-        dialog.Title = "Pick Backup Location";
+        folders = await StorageProvider.OpenFolderPickerAsync(new() { Title = "Pick Backup location" });
 
-        if (dialog.ShowDialog() is not true)
+
+        if (folders is not [var backup])
         {
             return;
         }
-        var backupPath = dialog.FolderName;
+
+        var backupPath = backup.TryGetLocalPath()!;
 
         App.AddBackupConfig(BackupConfig.Create(originPath, backupPath));
     }

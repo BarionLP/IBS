@@ -1,13 +1,104 @@
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace IBS.Core;
 
 public static class FileSyncer
 {
+
+    public static Task<ErrorState> Sync(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null, CancellationToken token = default)
+    {
+        AdvancedSync(config, progress, workingOn);
+        return SyncV2(config, progress, workingOn, token);
+    }
+    
+    public static async Task<ErrorState> SyncV2(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null, CancellationToken token = default)
+    {
+        var backups = (await Task.WhenAll(config.BackupDirectories.Where(static b => b.Exists).Select(BackupV2.CreateAsync))).Where(static b => b.MetaData.Version is 2).ToArray();
+
+        if (backups.Length is 0) return default;
+
+        await SyncImplAsync(config.OriginDirectory);
+
+        await Task.WhenAll(backups.Select(b =>
+        {
+            b.MetaData.LastWriteTime = DateTime.Now;
+            return b.SaveAsync(token);
+        }));
+
+        return default;
+
+        async Task SyncImplAsync(DirectoryInfo directory)
+        {
+            // var path = directory.GetRelativePath(config.OriginDirectory);
+            var existingNodes = new HashSet<string>();
+
+            foreach (var file in GetFiles(directory))
+            {
+                workingOn?.Report(file.FullName);
+                existingNodes.Add(file.Name);
+                var path = file.GetRelativePath(config.OriginDirectory);
+
+                foreach (var backup in backups)
+                {
+                    await backup.Backup(path, config.OriginDirectory);
+                }
+            }
+
+            var dirPath = directory.GetRelativePath(config.OriginDirectory);
+            foreach (var backup in backups)
+            {
+                foreach (var file in backup.GetFiles(dirPath))
+                {
+                    if (existingNodes.Contains(file.Name) || file.Info.DeletedAt is not null) continue;
+                    file.SoftDelete();
+                }
+            }
+
+            // sync subdirectories
+            existingNodes.Clear();
+            var subDirectories = directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude).ToArray();
+
+            foreach (var sub in subDirectories)
+            {
+                existingNodes.Add(sub.Name);
+                await SyncImplAsync(sub);
+            }
+
+            // mark remaining directories as deleted
+            foreach (var backup in backups)
+            {
+                foreach (var (name, node) in backup.GetDirectories(dirPath))
+                {
+                    if (existingNodes.Contains(name)) continue;
+                    SoftDeleteNodes(backup, dirPath is "." ? name : Path.Join(dirPath, name));
+                }
+            }
+
+            static void SoftDeleteNodes(BackupV2 backup, string dirPath)
+            {
+                foreach (var file in backup.GetFiles(dirPath))
+                {
+                    file.SoftDelete();
+                }
+
+                foreach (var (name, node) in backup.GetDirectories(dirPath))
+                {
+                    SoftDeleteNodes(backup, Path.Join(dirPath, name));
+                }
+            }
+        }
+
+
+        IEnumerable<FileInfo> GetFiles(DirectoryInfo directory)
+            => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
+    }
+
     public static void AdvancedSync(BackupConfig config, IProgress<float>? progress = null, IProgress<string>? workingOn = null)
     {
-        var backups = config.BackupDirectories.Where(static b => b.Exists).Select(Backup.Create).ToImmutableArray();
+        var backups = config.BackupDirectories.Where(static b => b.Exists).Select(Backup.Create).Where(static b => b.MetaData.Version is 1).ToImmutableArray();
+        
+        if (backups.Length is 0) return;
+
         Sync(config.OriginDirectory);
 
         var now = DateTime.Now;
@@ -27,7 +118,7 @@ public static class FileSyncer
         void Sync(DirectoryInfo directory)
         {
             var relativeDirectory = directory.GetRelativePath(config.OriginDirectory);
-            var files = GetFiles(directory);
+            var files = GetFiles(directory).Where(config.ShouldInclude);
 
             // read all files in the backup
             var backupInfos = backups.Select(backup =>
@@ -59,14 +150,14 @@ public static class FileSyncer
 
             // sync subdirectories
             var subDirectories = directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude).ToArray();
-            subDirectories.Consume(Sync);
+            subDirectories.ForEach(Sync);
 
             // mark remaining directories as deleted
             foreach (var info in backupInfos)
             {
                 var deletedDirectories = info.backup.Storage.Directory(relativeDirectory)
                     .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(backupDir => !subDirectories.Any(originDir =>  string.Equals(originDir.GetRelativePath(config.OriginDirectory), backupDir.GetRelativePath(info.backup.Storage), StringComparison.OrdinalIgnoreCase)));
+                    .Where(backupDir => !subDirectories.Any(originDir => string.Equals(originDir.GetRelativePath(config.OriginDirectory), backupDir.GetRelativePath(info.backup.Storage), StringComparison.OrdinalIgnoreCase)));
 
                 foreach (var deletedDirectory in deletedDirectories)
                 {
@@ -79,7 +170,7 @@ public static class FileSyncer
         }
 
         IEnumerable<FileInfo> GetFiles(DirectoryInfo directory)
-            => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(config.ShouldInclude) : [];
+            => directory.Exists ? directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly) : [];
 
         void SyncFile(FileInfo from, FileInfo to)
         {
@@ -88,10 +179,6 @@ public static class FileSyncer
             if (!to.Exists || !AreFilesInSync(from, to))
             {
                 workingOn?.Report(from.FullName);
-                if (to.Exists)
-                {
-                    to.Delete();
-                }
                 from.CopyTo(to, overwrite: true);
             }
         }
@@ -99,4 +186,47 @@ public static class FileSyncer
 
     public static bool AreFilesInSync(FileInfo mainFileInfo, FileInfo backupFileInfo)
         => backupFileInfo.Exists && mainFileInfo.Length == backupFileInfo.Length && mainFileInfo.LastWriteTimeUtc == backupFileInfo.LastWriteTimeUtc;
+}
+
+public static class FileOperations
+{
+    extension(File)
+    {
+        public static async Task CopyAsync(string sourceFileName, string destFileName, bool overwrite = false, CancellationToken token = default)
+        {
+            FileNotFoundException.ExistsOrThrow(sourceFileName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(destFileName);
+
+            if (!overwrite && File.Exists(destFileName))
+            {
+                throw new IOException();
+            }
+
+            using var source = File.OpenRead(sourceFileName);
+            using var destination = File.Create(destFileName);
+
+            // needs to be async because Dispose on source and destination has to wait
+            await source.CopyToAsync(destination, token);
+        }
+
+        public static async Task CopyAsync(FileInfo sourceFileInfo, FileInfo destFileInfo, bool overwrite = false, CancellationToken token = default)
+        {
+            FileNotFoundException.ExistsOrThrow(sourceFileInfo);
+            if (!overwrite && destFileInfo.Exists)
+            {
+                throw new IOException();
+            }
+
+            using var source = sourceFileInfo.OpenRead();
+            using var destination = destFileInfo.Create();
+
+            // needs to be async because Dispose on source and destination has to wait
+            await source.CopyToAsync(destination, token);
+        }
+    }
+
+    extension(FileInfo fileInfo)
+    {
+        public Task CopyToAsync(FileInfo destFileInfo, bool overwrite = false, CancellationToken token = default) => File.CopyAsync(fileInfo, destFileInfo, overwrite, token);
+    }
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Ametrin.Serialization;
 using IBS.Core.Serialization;
 
@@ -19,7 +20,7 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
         if (!BelongsHere(file)) throw new ArgumentException("Cannot delete files outside of the current backup", nameof(file));
 
         var newPath = $"{file.FullName}{DELETED_EXTENSION}";
-        file.MoveTo(newPath);
+        file.MoveTo(newPath, overwrite: true); // overwrite older deleted files
         DeletedTimeStamps[newPath] = DateTime.Now;
     }
 
@@ -39,8 +40,8 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
 
     public void Save()
     {
-        JsonExtensions.WriteToJsonFile(MetaData, MetaDataFile, BackupJsonContext.Default.BackupMetaData);
-        JsonExtensions.WriteToJsonFile(DeletedTimeStamps, DeletedTimeStampsFile, BackupJsonContext.Default.DictionaryStringDateTime);
+        JsonSerializer.SerializeToFile(MetaDataFile, MetaData, BackupJsonContext.Default.BackupMetaData, overwrite: true);
+        JsonSerializer.SerializeToFile(DeletedTimeStampsFile, DeletedTimeStamps, BackupJsonContext.Default.DictionaryStringDateTime, overwrite: true);
     }
 
     public static Backup Create(DirectoryInfo root)
@@ -49,8 +50,8 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
         var metaDataFile = root.File("metadata.json");
         var deletedTimestampsFile = root.File("deleted.json");
 
-        var metaData = metaDataFile.Exists ? JsonExtensions.ReadFromJsonFile(metaDataFile, BackupJsonContext.Default.BackupMetaData).OrThrow() : new();
-        var deletedTimestamps = deletedTimestampsFile.Exists ? JsonExtensions.ReadFromJsonFile(deletedTimestampsFile, BackupJsonContext.Default.DictionaryStringDateTime).OrThrow().ToDictionary(StringComparer.OrdinalIgnoreCase) : new(StringComparer.OrdinalIgnoreCase);
+        var metaData = metaDataFile.Exists ? JsonSerializer.Deserialize(metaDataFile, BackupJsonContext.Default.BackupMetaData) : new() { Version = 1 };
+        var deletedTimestamps = deletedTimestampsFile.Exists ? JsonSerializer.Deserialize(deletedTimestampsFile, BackupJsonContext.Default.DictionaryStringDateTime).ToDictionary(StringComparer.OrdinalIgnoreCase) : new(StringComparer.OrdinalIgnoreCase);
 
         return new Backup(root, storage, metaDataFile, deletedTimestampsFile, metaData, deletedTimestamps);
     }
@@ -58,5 +59,6 @@ public sealed class Backup(DirectoryInfo root, DirectoryInfo storage, FileInfo m
 
 public sealed class BackupMetaData
 {
+    public int Version { get; set; } = 1;
     public DateTime LastWriteTime { get; set; } = DateTime.MinValue;
 }
